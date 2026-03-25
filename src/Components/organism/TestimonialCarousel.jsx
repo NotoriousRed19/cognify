@@ -1,0 +1,209 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+
+// =============================================
+// DATOS DE TESTIMONIOS — Agrega más aquí:
+// =============================================
+const testimonials = [
+  {
+    quote:
+      "La función de expedientes clínicos es excepcional. Puedo acceder al historial de cada paciente en segundos y las notas están siempre organizadas.",
+    name: "Maria Lopez",
+    role: "Psicóloga Clínica",
+    initials: "ML",
+    stars: 5,
+  },
+  {
+    quote:
+      "Cognify transformó la manera en que gestiono mis consultas. Ahora dedico más tiempo a mis pacientes y menos a la administración.",
+    name: "Elibeth Castellanos",
+    role: "Psicóloga Clínica",
+    initials: "EC",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+  {
+    quote:
+      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
+    name: "Lic. Ana Garcia",
+    role: "Psicoterapeuta",
+    initials: "AG",
+    stars: 5,
+  },
+];
+
+// Cuántos testimonios mostrar por "slide"
+const ITEMS_PER_SLIDE = 3;
+// Intervalo de auto-scroll en milisegundos
+const AUTO_SCROLL_INTERVAL = 4000;
+
+function TestimonialCard({ testimonial }) {
+  return (
+    <div className="p-8 rounded-2xl bg-card border border-border/50 shadow-soft hover:shadow-card transition-all duration-300">
+      <div className="flex gap-1 mb-4">
+        {Array.from({ length: testimonial.stars }).map((_, i) => (
+          <Star key={i} className="w-5 h-5 text-accent fill-accent" />
+        ))}
+      </div>
+      <p className="text-foreground leading-relaxed mb-6 italic">
+        &quot;{testimonial.quote}&quot;
+      </p>
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold">
+          {testimonial.initials}
+        </div>
+        <div>
+          <p className="font-heading font-bold text-foreground">
+            {testimonial.name}
+          </p>
+          <p className="text-muted-foreground text-sm">{testimonial.role}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function TestimonialCarousel() {
+  // Agrupar testimonios en slides de ITEMS_PER_SLIDE
+  const slides = [];
+  for (let i = 0; i < testimonials.length; i += ITEMS_PER_SLIDE) {
+    slides.push(testimonials.slice(i, i + ITEMS_PER_SLIDE));
+  }
+
+  const [current, setCurrent] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const total = slides.length;
+
+  const goTo = useCallback(
+    (index) => {
+      if (isTransitioning) return;
+      setIsTransitioning(true);
+      setCurrent(index);
+      setTimeout(() => setIsTransitioning(false), 500);
+    },
+    [isTransitioning]
+  );
+
+  const next = useCallback(() => {
+    goTo((current + 1) % total);
+  }, [current, total, goTo]);
+
+  const prev = useCallback(() => {
+    goTo((current - 1 + total) % total);
+  }, [current, total, goTo]);
+
+  // Auto-scroll
+  useEffect(() => {
+    const timer = setInterval(next, AUTO_SCROLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [next]);
+
+  return (
+    <div className="relative w-full">
+      {/* Carousel viewport */}
+      <div className="overflow-hidden rounded-2xl">
+        <div
+          className="flex transition-transform duration-1000 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+        >
+          {slides.map((group, gi) => (
+            <div key={gi} className="w-full shrink-0">
+              <div className="grid md:grid-cols-3 gap-8">
+                {group.map((t, ti) => (
+                  <TestimonialCard key={ti} testimonial={t} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Flechas de navegación (solo si hay más de 1 slide) */}
+      {total > 1 && (
+        <>
+          <button
+            onClick={prev}
+            aria-label="Anterior"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full bg-card border border-border/50 shadow-soft flex items-center justify-center hover:shadow-card transition-all duration-300 hover:-translate-x-5 cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <button
+            onClick={next}
+            aria-label="Siguiente"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full bg-card border border-border/50 shadow-soft flex items-center justify-center hover:shadow-card transition-all duration-300 hover:translate-x-5 cursor-pointer"
+          >
+            <ChevronRight className="w-5 h-5 text-foreground" />
+          </button>
+        </>
+      )}
+
+      {/* Indicadores de puntos (solo si hay más de 1 slide) */}
+      {total > 1 && (
+        <div className="flex justify-center gap-2 mt-8">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Ir al grupo ${i + 1}`}
+              className={`h-3 rounded-full transition-all duration-300 cursor-pointer ${
+                i === current
+                  ? "bg-accent w-8"
+                  : "bg-border hover:bg-muted-foreground w-3"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
