@@ -13,6 +13,7 @@ import {
 import Button from "@/Components/atoms/Button";
 import TestimonialCarousel from "@/Components/organism/TestimonialCarousel";
 import NavFooter from "@/Components/molecules/NavFooter";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -60,12 +61,16 @@ export default function Home() {
                     </span>
                     <ArrowRight className="ml-2 w-4 h-4 shrink-0" />
                   </Button>
-                  <Button className="bg-gradient-primary w-full sm:w-fit h-12 flex items-center justify-center text-primary-foreground text-base px-8 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300">
+
+                  <a
+                    href="/login"
+                    className="bg-gradient-primary w-full sm:w-fit h-12 flex items-center justify-center text-primary-foreground text-base px-8 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
+                  >
                     <span className="flex-1 text-center whitespace-nowrap">
                       Iniciar sesión
                     </span>
                     <Brain className="ml-2 w-5 h-5 text-white shrink-0" />
-                  </Button>
+                  </a>
                 </div>
                 <div className="flex items-center gap-6 pt-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

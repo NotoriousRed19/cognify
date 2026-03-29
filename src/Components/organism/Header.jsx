@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import NavHeader from "@/Components/molecules/NavHeader";
 import Button from "@/Components/atoms/Button";
@@ -26,9 +27,9 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex items-center shrink-0">
-          <Button className="whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300">
-            Comenzar gratis
-          </Button>
+            <a href="/register" className=" cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300">
+              Comenzar gratis
+            </a>
         </div>
 
         {/* Mobile menu toggle button */}
@@ -49,9 +50,9 @@ export default function Header() {
               className="block w-full py-2 text-gray-600 font-medium hover:text-[#886dbe] transition-colors" 
             />
           </nav>
-          <Button className="w-full whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg">
+          <a href="/register" className="w-full whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg">
             Comenzar gratis
-          </Button>
+          </a>
         </div>
       )}
     </header>

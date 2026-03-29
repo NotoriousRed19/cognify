@@ -1,4 +1,5 @@
 import Header from "@/Components/organism/Header";
+import SessionProvider from "@/Components/providers/SessionProvider";
 
 import "@/globals.css";
 
@@ -12,8 +13,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body className="">
-        <Header />
-        {children}
+        <SessionProvider>
+          <Header />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );
