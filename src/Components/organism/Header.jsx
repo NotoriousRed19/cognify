@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import NavHeader from "@/Components/molecules/NavHeader";
 import Button from "@/Components/atoms/Button";
 import { Brain, Menu, X } from "lucide-react";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  const authRoutes = ["/login", "/register", "/forgot-password"];
+  if (authRoutes.includes(pathname)) return null;
 
   return (
     <header className="fixed top-0 w-full z-50 flex flex-col bg-background/80 backdrop-blur-lg shadow-sm">
