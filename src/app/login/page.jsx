@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <main>
       <section id="login">
-        <div className="min-h-screen bg-gradient-soft flex items-center justify-center px-4">
+        <div className="min-h-screen bg-gradient-soft-pattern flex items-center justify-center px-4">
           <div className="w-full max-w-md">
             <Link
               href="/"

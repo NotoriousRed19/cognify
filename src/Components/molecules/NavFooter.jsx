@@ -1,9 +1,23 @@
-export default function NavFooter({className, wrapperClassName}) {
-    return (
-        <ul className={`flex gap-5 font-semibold ${wrapperClassName || ''}`}>
-            <li><a href="#" className={className}>Privacidad</a></li>
-            <li><a href="#" className={className}>Terminos y condiciones</a></li>
-            <li><a href="#" className={className}>Contacto</a></li>
-        </ul>
-    )
+import Link from "next/link";
+
+export default function NavFooter({ className, wrapperClassName }) {
+  return (
+    <ul className={`flex gap-5 font-semibold ${wrapperClassName || ""}`}>
+      <li>
+        <Link href="/privacy" className={className}>
+          Privacidad
+        </Link>
+      </li>
+      <li>
+        <Link href="/terms" className={className}>
+          Términos y condiciones
+        </Link>
+      </li>
+      <li>
+        <Link href="/contact" className={className}>
+          Contacto
+        </Link>
+      </li>
+    </ul>
+  );
 }

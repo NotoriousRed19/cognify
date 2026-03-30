@@ -1,5 +1,3 @@
-import { ArrowRight } from "lucide-react";
-
 export default function Button({ children, className, onClick }) {
   return (
     <button

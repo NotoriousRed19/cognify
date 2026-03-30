@@ -3,18 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 
-// =============================================
-// DATOS DE TESTIMONIOS — Agrega más aquí:
-// =============================================
 const testimonials = [
-  {
-    quote:
-      "La función de expedientes clínicos es excepcional. Puedo acceder al historial de cada paciente en segundos y las notas están siempre organizadas.",
-    name: "Maria Lopez",
-    role: "Psicóloga Clínica",
-    initials: "ML",
-    stars: 5,
-  },
   {
     quote:
       "Cognify transformó la manera en que gestiono mis consultas. Ahora dedico más tiempo a mis pacientes y menos a la administración.",
@@ -25,65 +14,47 @@ const testimonials = [
   },
   {
     quote:
+      "La función de expedientes clínicos es excepcional. Puedo acceder al historial de cada paciente en segundos y las notas están siempre organizadas.",
+    name: "María López",
+    role: "Psicóloga Clínica",
+    initials: "ML",
+    stars: 5,
+  },
+  {
+    quote:
       "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
+    name: "Lic. Ana García",
     role: "Psicoterapeuta",
     initials: "AG",
     stars: 5,
   },
   {
     quote:
-      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
-    role: "Psicoterapeuta",
-    initials: "AG",
+      "La seguridad de los datos me da tranquilidad. Sé que la información de mis pacientes está protegida y cumple con todas las normativas.",
+    name: "Dr. Carlos Méndez",
+    role: "Psiquiatra",
+    initials: "CM",
     stars: 5,
   },
   {
     quote:
-      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
-    role: "Psicoterapeuta",
-    initials: "AG",
+      "Antes usaba hojas de cálculo para todo. Cognify me ahorró horas de trabajo administrativo cada semana. No volvería atrás.",
+    name: "Lic. Sofía Ramírez",
+    role: "Terapeuta Familiar",
+    initials: "SR",
     stars: 5,
   },
   {
     quote:
-      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
-    role: "Psicoterapeuta",
-    initials: "AG",
-    stars: 5,
-  },
-  {
-    quote:
-      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
-    role: "Psicoterapeuta",
-    initials: "AG",
-    stars: 5,
-  },
-  {
-    quote:
-      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
-    role: "Psicoterapeuta",
-    initials: "AG",
-    stars: 5,
-  },
-  {
-    quote:
-      "Los recordatorios automáticos redujeron mis cancelaciones en un 60%. La inversión se paga sola con la primera semana de uso.",
-    name: "Lic. Ana Garcia",
-    role: "Psicoterapeuta",
-    initials: "AG",
+      "El panel de analíticas me permite ver tendencias en mi práctica que antes no notaba. Una herramienta imprescindible para crecer profesionalmente.",
+    name: "Dr. Alejandro Torres",
+    role: "Psicólogo Organizacional",
+    initials: "AT",
     stars: 5,
   },
 ];
 
-// Cuántos testimonios mostrar por "slide"
 const ITEMS_PER_SLIDE = 3;
-// Intervalo de auto-scroll en milisegundos
 const AUTO_SCROLL_INTERVAL = 4000;
 
 function TestimonialCard({ testimonial }) {
@@ -113,7 +84,6 @@ function TestimonialCard({ testimonial }) {
 }
 
 export default function TestimonialCarousel() {
-  // Agrupar testimonios en slides de ITEMS_PER_SLIDE
   const slides = [];
   for (let i = 0; i < testimonials.length; i += ITEMS_PER_SLIDE) {
     slides.push(testimonials.slice(i, i + ITEMS_PER_SLIDE));
@@ -141,7 +111,6 @@ export default function TestimonialCarousel() {
     goTo((current - 1 + total) % total);
   }, [current, total, goTo]);
 
-  // Auto-scroll
   useEffect(() => {
     const timer = setInterval(next, AUTO_SCROLL_INTERVAL);
     return () => clearInterval(timer);
@@ -149,7 +118,6 @@ export default function TestimonialCarousel() {
 
   return (
     <div className="relative w-full">
-      {/* Carousel viewport */}
       <div className="overflow-hidden rounded-2xl">
         <div
           className="flex transition-transform duration-1000 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
@@ -167,10 +135,10 @@ export default function TestimonialCarousel() {
         </div>
       </div>
 
-      {/* Flechas de navegación (solo si hay más de 1 slide) */}
       {total > 1 && (
         <>
           <button
+            type="button"
             onClick={prev}
             aria-label="Anterior"
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full bg-card border border-border/50 shadow-soft flex items-center justify-center hover:shadow-card transition-all duration-300 hover:-translate-x-5 cursor-pointer"
@@ -178,6 +146,7 @@ export default function TestimonialCarousel() {
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </button>
           <button
+            type="button"
             onClick={next}
             aria-label="Siguiente"
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full bg-card border border-border/50 shadow-soft flex items-center justify-center hover:shadow-card transition-all duration-300 hover:translate-x-5 cursor-pointer"
@@ -187,11 +156,11 @@ export default function TestimonialCarousel() {
         </>
       )}
 
-      {/* Indicadores de puntos (solo si hay más de 1 slide) */}
       {total > 1 && (
         <div className="flex justify-center gap-2 mt-8">
           {slides.map((_, i) => (
             <button
+              type="button"
               key={i}
               onClick={() => goTo(i)}
               aria-label={`Ir al grupo ${i + 1}`}
