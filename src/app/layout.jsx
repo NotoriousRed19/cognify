@@ -1,6 +1,7 @@
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import Header from "@/Components/organism/Header";
 import SessionProvider from "@/Components/providers/SessionProvider";
+import SessionGuard from "@/Components/providers/SessionGuard";
 
 import "@/globals.css";
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
     <html lang="es" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
       <body>
         <SessionProvider>
+          <SessionGuard />
           <Header />
           {children}
         </SessionProvider>

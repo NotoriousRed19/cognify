@@ -33,7 +33,9 @@ export default function LoginPage() {
       if (res?.error) {
         setError("Correo o contraseña incorrectos.");
       } else {
-        window.location.href = "/";
+        // Marcar sesión activa para esta pestaña
+        sessionStorage.setItem("cognify-active-session", "true");
+        window.location.href = "/dashboard";
       }
     } catch {
       setError("Ocurrió un error. Inténtalo de nuevo.");
@@ -70,7 +72,10 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
+                onClick={() => {
+                  sessionStorage.setItem("cognify-active-session", "true");
+                  signIn("google", { callbackUrl: "/dashboard" });
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-background hover:bg-muted/50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
               >
                 <GoogleIcon />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Brain, User, Mail, Lock, EyeOff, Eye } from "lucide-react";
+import { Brain, User, Mail, Lock, EyeOff, Eye, AlertCircle, X } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import GoogleIcon from "@/Components/atoms/GoogleIcon";
@@ -13,6 +13,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +41,13 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.message || "Error al crear la cuenta.");
+        
+        if (res.status === 409 || data.message?.includes("Ya existe")) {
+          setModalMessage(data.message || "El correo ya está en uso.");
+          setErrorModalVisible(true);
+        } else {
+          setError(data.message || "Error al crear la cuenta.");
+        }
         return;
       }
 
@@ -47,7 +55,7 @@ export default function RegisterPage() {
       await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/",
+        callbackUrl: "/dashboard",
       });
     } catch {
       setError("Ocurrió un error. Inténtalo de nuevo.");
@@ -84,7 +92,7 @@ export default function RegisterPage() {
 
               <button
                 type="button"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
+                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-background hover:bg-muted/50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
               >
                 <GoogleIcon />
@@ -201,6 +209,45 @@ export default function RegisterPage() {
           </div>
         </div>
       </section>
+
+      {/* Pop-up / Modal de Error */}
+      {errorModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="relative bg-card w-full max-w-sm rounded-2xl shadow-elevated border border-border/50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                Correo en uso
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Este correo electrónico ya está registrado en Cognify.
+              </p>
+              <div className="flex gap-3 w-full">
+                <Link
+                  href="/login"
+                  className="flex-1 py-2.5 flex items-center justify-center rounded-xl border border-border/50 bg-background text-foreground font-medium text-sm hover:bg-muted/50 transition-colors"
+                >
+                  Iniciar sesión
+                </Link>
+                <button
+                  onClick={() => setErrorModalVisible(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-primary text-white font-medium text-sm hover:opacity-90 shadow-md transition-opacity cursor-pointer"
+                >
+                  Intentar otro
+                </button>
+              </div>
+            </div>
+            <button 
+              onClick={() => setErrorModalVisible(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

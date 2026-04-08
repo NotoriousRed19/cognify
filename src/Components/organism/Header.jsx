@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import NavHeader from "@/Components/molecules/NavHeader";
 import { Brain, Menu, X } from "lucide-react";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { status } = useSession();
 
   const authRoutes = ["/login", "/register", "/forgot-password"];
-  if (authRoutes.includes(pathname)) return null;
+  
+  // Ocultar el Header solo si estamos en las rutas de Auth o DENTRO del Dashboard
+  if (authRoutes.includes(pathname) || pathname.startsWith("/dashboard")) return null;
 
   return (
     <header className="fixed top-0 w-full z-50 flex flex-col bg-background/80 backdrop-blur-lg shadow-sm">
@@ -31,18 +35,39 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          <Link
-            href="/login"
-            className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
-          >
-            Iniciar sesión
-          </Link>
-          <Link
-            href="/register"
-            className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
-          >
-            Comenzar gratis
-          </Link>
+          {status === "loading" ? null : status === "authenticated" ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
+              >
+                Ir al Dashboard
+              </Link>
+              <button
+                onClick={() => {
+                  import("next-auth/react").then((mod) => mod.signOut({ callbackUrl: "/" }));
+                }}
+                className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-muted-foreground font-medium bg-muted shadow-sm hover:bg-muted/80 transition-all duration-300"
+              >
+                Cerrar Sesión
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
+              >
+                Iniciar sesión
+              </Link>
+              <Link
+                href="/register"
+                className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
+              >
+                Comenzar gratis
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu toggle button */}
@@ -69,18 +94,39 @@ export default function Header() {
             />
           </nav>
           <div className="flex flex-col gap-3">
-            <Link
-              href="/login"
-              className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
-            >
-              Iniciar sesión
-            </Link>
-            <Link
-              href="/register"
-              className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
-            >
-              Comenzar gratis
-            </Link>
+             {status === "loading" ? null : status === "authenticated" ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
+                  >
+                    Ir al Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      import("next-auth/react").then((mod) => mod.signOut({ callbackUrl: "/" }));
+                    }}
+                    className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-muted-foreground font-medium bg-muted shadow-sm hover:bg-muted/80 transition-all duration-300 text-lg"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </>
+             ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
+                  >
+                    Comenzar gratis
+                  </Link>
+                </>
+             )}
           </div>
         </div>
       )}

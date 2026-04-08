@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Modelos requeridos por NextAuth (PrismaAdapter) ────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Modelos de la aplicación ────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Solo si usa login con email/contraseña
+  plan          String    @default("free")
+
+  // Relaciones NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  // Relaciones de la app
+  patients Patient[]
+  appointments Appointment[]
+}
+
+model Patient {
+  id                String  @id @default(cuid())
+  nombre            String  // Dejar nombre por convención existente pero lo usaremos conceptualmente como nombre/apellido
+  identificacion    String?
+  celular           String?
+  fecha_nacimiento  DateTime?
+  sexo              String?
+  nacionalidad      String?
+  historial_medico  String? @db.Text
+  medicacion        String? @db.Text
+  
+  doctor_id         String
+  doctor            User    @relation(fields: [doctor_id], references: [id])
+  sesiones          TherapySession[]
+  appointments      Appointment[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model TherapySession {
+  id                String   @id @default(cuid())
+  fecha_sesion      DateTime @default(now())
+  
+  notas             String?  @db.Text
+  tareas_pendientes String?  @db.Text
+  observaciones     String?  @db.Text
+  
+  patient_id        String
+  patient           Patient  @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Appointment {
+  id                String   @id @default(cuid())
+  
+  titulo            String
+  fecha_inicio      DateTime
+  fecha_fin         DateTime
+  estado            String   @default("AGENDADA")
+  
+  patient_id        String?
+  patient           Patient? @relation(fields: [patient_id], references: [id], onDelete: SetNull)
+  
+  doctor_id         String
+  doctor            User     @relation(fields: [doctor_id], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
