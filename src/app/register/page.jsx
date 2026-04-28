@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Brain, User, Mail, Lock, EyeOff, Eye, AlertCircle, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,10 +24,24 @@ export default function RegisterPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`
+        redirectTo: `${window.location.origin}/api/auth/callback?action=register`
       }
     });
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    if (err) {
+      if (err.includes("ya está registrada")) {
+        setModalMessage(err);
+        setErrorModalVisible(true);
+      } else {
+        setError(err);
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +71,7 @@ export default function RegisterPage() {
 
       if (error) {
         if (error.message.includes("already registered")) {
-          setModalMessage("El correo ya está en uso.");
+          setModalMessage("Esta cuenta ya está registrada.");
           setErrorModalVisible(true);
         } else {
           setError(error.message || "Error al crear la cuenta.");
@@ -235,7 +249,7 @@ export default function RegisterPage() {
                 <AlertCircle className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="text-lg font-bold text-foreground mb-2">
-                Correo en uso
+                Cuenta existente
               </h3>
               <p className="text-sm text-muted-foreground mb-6">
                 {modalMessage}
