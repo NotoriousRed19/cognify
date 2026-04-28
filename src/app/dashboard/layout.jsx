@@ -1,9 +1,9 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 import { 
   Brain, 
   LogOut, 
@@ -14,18 +14,43 @@ import {
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
-  const { data: session, status } = useSession();
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.push("/login");
+      } else {
+        setSession(data.session);
+      }
+      setLoading(false);
+    };
 
-  if (status === "loading") {
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.push("/login");
+      } else {
+        setSession(session);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router, supabase.auth]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-soft-pattern flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -103,16 +128,16 @@ export default function DashboardLayout({ children }) {
           }`}>
             <div className={`flex flex-col truncate transition-all duration-300 ${isSidebarCollapsed ? "w-0 h-0 opacity-0 hidden" : "opacity-100"}`}>
               <span className="text-sm font-semibold text-foreground truncate">
-                {session?.user?.name || "Dr. Cuenta"}
+                {session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || "Usuario"}
               </span>
               <span className="text-xs text-muted-foreground truncate">
                 {session?.user?.email}
               </span>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={handleSignOut}
               title="Cerrar sesión"
-              className={`flex items-center justify-center rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors ${
+              className={`flex items-center justify-center rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer ${
                 isSidebarCollapsed ? "w-10 h-10 p-0 rounded-full" : "w-full gap-2 px-3 py-2"
               }`}
             >
@@ -136,7 +161,7 @@ export default function DashboardLayout({ children }) {
           <span className="text-brand-gradient font-bold text-lg">Cognify</span>
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={handleSignOut}
           className="p-2 text-muted-foreground hover:text-red-500 transition-colors cursor-pointer"
         >
           <LogOut className="w-5 h-5" />

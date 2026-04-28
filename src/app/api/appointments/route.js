@@ -1,31 +1,20 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, supabase, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const { data: appointments, error } = await supabase
+      .from("Appointment")
+      .select(`
+        *,
+        patient:Patient ( nombre )
+      `)
+      .order("fecha_inicio", { ascending: true });
 
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        doctor_id: session.user.id,
-      },
-      include: {
-        patient: {
-          select: {
-            nombre: true,
-          }
-        }
-      },
-      orderBy: {
-        fecha_inicio: "asc",
-      },
-    });
+    if (error) throw error;
 
     return NextResponse.json({ appointments }, { status: 200 });
   } catch (error) {
@@ -39,11 +28,8 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const { user, supabase, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const body = await request.json();
     const {
@@ -60,35 +46,30 @@ export async function POST(request) {
       );
     }
 
-    // Si pasaron un paciente, validemos que el profesional es el dueño
-    if (patient_id) {
-      const patientData = await prisma.patient.findFirst({
-        where: { id: patient_id, doctor_id: session.user.id }
-      });
-      if (!patientData) {
-        return NextResponse.json(
-          { error: "Permiso denegado sobre el paciente" },
-          { status: 403 }
-        );
-      }
-    }
-
-    const newAppointment = await prisma.appointment.create({
-      data: {
+    const { data: newAppointment, error } = await supabase
+      .from("Appointment")
+      .insert({
+        id: crypto.randomUUID(),
         titulo,
-        fecha_inicio: new Date(fecha_inicio),
-        fecha_fin: new Date(fecha_fin),
-        patient_id: patient_id || null, // Opcional
-        doctor_id: session.user.id,
-      },
-      include: {
-        patient: {
-          select: {
-            nombre: true,
-          }
-        }
+        fecha_inicio: new Date(fecha_inicio).toISOString(),
+        fecha_fin: new Date(fecha_fin).toISOString(),
+        patient_id: patient_id || null,
+        doctor_id: user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .select(`
+        *,
+        patient:Patient ( nombre )
+      `)
+      .single();
+
+    if (error) {
+      // Si falla por foreign key (RLS no encuentra al paciente)
+      if (error.code === '23503' || error.code === '42501') {
+        return NextResponse.json({ error: "Permiso denegado sobre el paciente" }, { status: 403 });
       }
-    });
+      throw error;
+    }
 
     return NextResponse.json({ appointment: newAppointment }, { status: 201 });
   } catch (error) {

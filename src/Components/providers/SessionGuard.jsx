@@ -1,29 +1,32 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { createClient } from "@/utils/supabase/client";
 
 /**
- * SessionGuard — invalida sesiones huérfanas de pestañas anteriores.
- *
- * Estrategia: sessionStorage es específico por pestaña. Cuando el usuario
- * hace login explícito, guardamos un flag "cognify-active-session".
- * Si no existe ese flag pero hay una cookie de sesión activa (estado
- * "authenticated"), significa que la sesión viene de otra pestaña/run
- * anterior → hacemos signOut automático.
+ * SessionGuard — invalida sesiones huérfanas de pestañas anteriores (Supabase version).
  */
 export default function SessionGuard() {
-  const { status } = useSession();
+  const supabase = createClient();
 
   useEffect(() => {
-    if (status === "authenticated") {
-      const isActive = sessionStorage.getItem("cognify-active-session");
-      if (!isActive) {
-        // Sesión huérfana: cierre automático sin redirigir
-        signOut({ redirect: false });
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // En Supabase, a menos que el usuario marque "Recordarme",
+        // podemos cerrar sesión si no hay flag de sesión activa.
+        // Como este era el comportamiento deseado con NextAuth, lo replicamos.
+        // NOTA: Supabase por defecto guarda la sesión en localStorage.
+        const isActive = sessionStorage.getItem("cognify-active-session");
+        if (!isActive) {
+          await supabase.auth.signOut();
+        }
       }
-    }
-  }, [status]);
+    };
+
+    checkSession();
+  }, [supabase.auth]);
 
   return null;
 }

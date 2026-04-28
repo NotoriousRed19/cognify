@@ -1,68 +1,55 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 import { startOfWeek, endOfWeek, addDays, format } from "date-fns";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const { user, supabase, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
-    const doctorId = session.user.id;
     const now = new Date();
 
     // ── 1. Total de pacientes ────────────────────────────────────────────────
-    const totalPatients = await prisma.patient.count({
-      where: { doctor_id: doctorId },
-    });
+    const { count: totalPatients, error: e1 } = await supabase
+      .from("Patient")
+      .select('*', { count: 'exact', head: true });
 
     // ── 2. Citas próximas (hoy en adelante) ─────────────────────────────────
-    const upcomingAppointments = await prisma.appointment.findMany({
-      where: {
-        doctor_id: doctorId,
-        fecha_inicio: { gte: now },
-      },
-      include: {
-        patient: { select: { nombre: true } },
-      },
-      orderBy: { fecha_inicio: "asc" },
-      take: 5,
-    });
+    const { data: upcomingAppointments, error: e2 } = await supabase
+      .from("Appointment")
+      .select('*, patient:Patient(nombre)')
+      .gte("fecha_inicio", now.toISOString())
+      .order("fecha_inicio", { ascending: true })
+      .limit(5);
 
     // ── 3. Pacientes CON al menos una cita próxima ───────────────────────────
-    const patientsWithAppointment = await prisma.appointment.findMany({
-      where: {
-        doctor_id: doctorId,
-        fecha_inicio: { gte: now },
-        patient_id: { not: null },
-      },
-      select: { patient_id: true },
-      distinct: ["patient_id"],
-    });
-    const withAppointmentCount = patientsWithAppointment.length;
-    const withoutAppointmentCount = totalPatients - withAppointmentCount;
+    const { data: patientsWithApptData, error: e3 } = await supabase
+      .from("Appointment")
+      .select('patient_id')
+      .gte("fecha_inicio", now.toISOString())
+      .not('patient_id', 'is', null);
+      
+    // Eliminar duplicados manualmente (Supabase JS no tiene DISTINCT nativo simple en select)
+    const uniquePatientIds = new Set((patientsWithApptData || []).map(a => a.patient_id));
+    const withAppointmentCount = uniquePatientIds.size;
+    const withoutAppointmentCount = (totalPatients || 0) - withAppointmentCount;
 
     // ── 4. Actividad semanal (citas por día, semana actual) ──────────────────
     const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Lunes
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 });     // Domingo
 
-    const thisWeekAppointments = await prisma.appointment.findMany({
-      where: {
-        doctor_id: doctorId,
-        fecha_inicio: { gte: weekStart, lte: weekEnd },
-      },
-      select: { fecha_inicio: true },
-    });
+    const { data: thisWeekAppointments, error: e4 } = await supabase
+      .from("Appointment")
+      .select("fecha_inicio")
+      .gte("fecha_inicio", weekStart.toISOString())
+      .lte("fecha_inicio", weekEnd.toISOString());
 
     // Agrupar por día (Lun–Dom)
     const dayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
     const weeklyData = dayLabels.map((day, i) => {
       const dayDate = addDays(weekStart, i);
       const dayStr = format(dayDate, "yyyy-MM-dd");
-      const count = thisWeekAppointments.filter(
+      const count = (thisWeekAppointments || []).filter(
         (a) => format(new Date(a.fecha_inicio), "yyyy-MM-dd") === dayStr
       ).length;
       return { day, citas: count };
@@ -74,29 +61,26 @@ export async function GET() {
     const todayEnd = new Date(now);
     todayEnd.setHours(23, 59, 59, 999);
 
-    const todayCount = await prisma.appointment.count({
-      where: {
-        doctor_id: doctorId,
-        fecha_inicio: { gte: todayStart, lte: todayEnd },
-      },
-    });
+    const { count: todayCount, error: e5 } = await supabase
+      .from("Appointment")
+      .select('*', { count: 'exact', head: true })
+      .gte("fecha_inicio", todayStart.toISOString())
+      .lte("fecha_inicio", todayEnd.toISOString());
 
     // ── 6. Sesiones Completadas (Histórico) ──────────────────────────
-    const completedSessionsCount = await prisma.appointment.count({
-      where: {
-        doctor_id: doctorId,
-        estado: "COMPLETADA",
-      },
-    });
+    const { count: completedSessionsCount, error: e6 } = await supabase
+      .from("Appointment")
+      .select('*', { count: 'exact', head: true })
+      .eq("estado", "COMPLETADA");
 
     return NextResponse.json({
-      totalPatients,
+      totalPatients: totalPatients || 0,
       withAppointmentCount,
       withoutAppointmentCount,
-      todayCount,
-      upcomingAppointments,
+      todayCount: todayCount || 0,
+      upcomingAppointments: upcomingAppointments || [],
       weeklyData,
-      completedSessionsCount,
+      completedSessionsCount: completedSessionsCount || 0,
     });
   } catch (error) {
     console.error("[DASHBOARD_STATS]", error);

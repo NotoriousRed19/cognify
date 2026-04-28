@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, supabase, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const { data: patients, error } = await supabase
+      .from("Patient")
+      .select("*")
+      .order("createdAt", { ascending: false });
 
-    const patients = await prisma.patient.findMany({
-      where: {
-        doctor_id: session.user.id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    if (error) throw error;
 
     return NextResponse.json({ patients }, { status: 200 });
   } catch (error) {
@@ -32,11 +25,8 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const { user, supabase, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const body = await request.json();
     const {
@@ -58,25 +48,25 @@ export async function POST(request) {
       );
     }
 
-    const newPatient = await prisma.patient.create({
-      data: {
+    const { data: newPatient, error } = await supabase
+      .from("Patient")
+      .insert({
+        id: crypto.randomUUID(),
         nombre,
         identificacion: identificacion || null,
         celular: celular || null,
-        fecha_nacimiento: fecha_nacimiento ? new Date(fecha_nacimiento) : null,
+        fecha_nacimiento: fecha_nacimiento ? new Date(fecha_nacimiento).toISOString() : null,
         sexo: sexo || null,
         nacionalidad: nacionalidad || null,
         historial_medico: historial_medico || null,
         medicacion: medicacion || null,
+        doctor_id: user.id, // Forzamos el RLS y relacion
+        updatedAt: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-        // Clave foránea: Vinculando el paciente al doctor actual
-        doctor: {
-          connect: {
-            id: session.user.id,
-          },
-        },
-      },
-    });
+    if (error) throw error;
 
     return NextResponse.json({ patient: newPatient }, { status: 201 });
   } catch (error) {

@@ -1,16 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import NavHeader from "@/Components/molecules/NavHeader";
 import { Brain, Menu, X } from "lucide-react";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
-  const { status } = useSession();
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+      setLoading(false);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   const authRoutes = ["/login", "/register", "/forgot-password"];
   
@@ -35,7 +59,7 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          {status === "loading" ? null : status === "authenticated" ? (
+          {loading ? null : user ? (
             <>
               <Link
                 href="/dashboard"
@@ -44,9 +68,7 @@ export default function Header() {
                 Ir al Dashboard
               </Link>
               <button
-                onClick={() => {
-                  import("next-auth/react").then((mod) => mod.signOut({ callbackUrl: "/" }));
-                }}
+                onClick={handleSignOut}
                 className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-muted-foreground font-medium bg-muted shadow-sm hover:bg-muted/80 transition-all duration-300"
               >
                 Cerrar Sesión
@@ -94,7 +116,7 @@ export default function Header() {
             />
           </nav>
           <div className="flex flex-col gap-3">
-             {status === "loading" ? null : status === "authenticated" ? (
+             {loading ? null : user ? (
                 <>
                   <Link
                     href="/dashboard"
@@ -103,9 +125,7 @@ export default function Header() {
                     Ir al Dashboard
                   </Link>
                   <button
-                    onClick={() => {
-                      import("next-auth/react").then((mod) => mod.signOut({ callbackUrl: "/" }));
-                    }}
+                    onClick={handleSignOut}
                     className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-muted-foreground font-medium bg-muted shadow-sm hover:bg-muted/80 transition-all duration-300 text-lg"
                   >
                     Cerrar Sesión

@@ -1,34 +1,21 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const { user, supabase, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
 
     const { id } = await params;
 
-    const existing = await prisma.therapySession.findFirst({
-      where: {
-        id,
-        patient: {
-          doctor_id: session.user.id,
-        },
-      },
-    });
+    const { error } = await supabase
+      .from("TherapySession")
+      .delete()
+      .eq("id", id);
 
-    if (!existing) {
+    if (error) {
       return NextResponse.json({ error: "Sesión no encontrada o acceso denegado" }, { status: 404 });
     }
-
-    await prisma.therapySession.delete({
-      where: { id },
-    });
 
     return NextResponse.json({ message: "Sesión eliminada exitosamente" }, { status: 200 });
   } catch (error) {

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Brain, Mail, Lock, EyeOff, Eye } from "lucide-react";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import GoogleIcon from "@/Components/atoms/GoogleIcon";
 
 export default function LoginPage() {
@@ -12,6 +13,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleGoogleLogin = async () => {
+    sessionStorage.setItem("cognify-active-session", "true");
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,18 +37,15 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await signIn("credentials", {
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       });
 
-      if (res?.error) {
+      if (error) {
         setError("Correo o contraseña incorrectos.");
       } else {
-        // Marcar sesión activa para esta pestaña
-        sessionStorage.setItem("cognify-active-session", "true");
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       }
     } catch {
       setError("Ocurrió un error. Inténtalo de nuevo.");
@@ -72,10 +82,7 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  sessionStorage.setItem("cognify-active-session", "true");
-                  signIn("google", { callbackUrl: "/dashboard" });
-                }}
+                onClick={handleGoogleLogin}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-background hover:bg-muted/50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
               >
                 <GoogleIcon />

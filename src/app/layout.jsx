@@ -1,6 +1,5 @@
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import Header from "@/Components/organism/Header";
-import SessionProvider from "@/Components/providers/SessionProvider";
 import SessionGuard from "@/Components/providers/SessionGuard";
 
 import "@/globals.css";
@@ -18,20 +17,43 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata = {
-  title: "Cognify — Gestión para profesionales de salud mental",
+  metadataBase: new URL('https://cognify.app'), // TODO: Change to real production URL
+  title: {
+    default: "Cognify — Gestión para profesionales de salud mental",
+    template: "%s | Cognify",
+  },
   description:
     "Simplifica la gestión de citas, expedientes y seguimiento de pacientes para profesionales de la salud mental. Todo en un solo lugar.",
+  keywords: ["psicología", "gestión de pacientes", "salud mental", "software médico", "expedientes clínicos", "citas", "terapia"],
+  openGraph: {
+    title: "Cognify — Gestión para profesionales de salud mental",
+    description: "Simplifica la gestión de citas, expedientes y seguimiento de pacientes. Todo en un solo lugar.",
+    url: "https://cognify.app",
+    siteName: "Cognify",
+    images: [
+      {
+        url: "/og-image.png", // TODO: Add an og-image.png to the public folder
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "es_ES",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cognify — Gestión para profesionales de salud mental",
+    description: "Software especializado en gestión de consultas de salud mental.",
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
       <body>
-        <SessionProvider>
-          <SessionGuard />
-          <Header />
-          {children}
-        </SessionProvider>
+        <SessionGuard />
+        <Header />
+        {children}
       </body>
     </html>
   );

@@ -295,7 +295,7 @@ export default function CalendarPage() {
                   return (
                     <div 
                       key={appt.id} 
-                      className={`relative overflow-hidden p-3 rounded-xl border border-border/50 border-l-[4px] shadow-sm flex items-center justify-between gap-3 transition-all cursor-default bg-card ${isPatientAppt ? 'border-l-violet-500' : 'border-l-emerald-500'}`}
+                      className={`relative overflow-hidden p-3 rounded-xl border border-border/50 border-l-4 shadow-sm flex items-center justify-between gap-3 transition-all cursor-default bg-card ${isPatientAppt ? 'border-l-violet-500' : 'border-l-emerald-500'}`}
                     >
                       {/* Ambient Tint */}
                       <div className={`absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none ${isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500'}`} />

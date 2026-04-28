@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Brain, User, Mail, Lock, EyeOff, Eye, AlertCircle, X } from "lucide-react";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import GoogleIcon from "@/Components/atoms/GoogleIcon";
 
 export default function RegisterPage() {
@@ -15,6 +16,18 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleGoogleLogin = async () => {
+    sessionStorage.setItem("cognify-active-session", "true");
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,31 +45,34 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // TODO: Reemplaza con tu endpoint real de registro
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        
-        if (res.status === 409 || data.message?.includes("Ya existe")) {
-          setModalMessage(data.message || "El correo ya está en uso.");
+      if (error) {
+        if (error.message.includes("already registered")) {
+          setModalMessage("El correo ya está en uso.");
           setErrorModalVisible(true);
         } else {
-          setError(data.message || "Error al crear la cuenta.");
+          setError(error.message || "Error al crear la cuenta.");
         }
         return;
       }
 
-      // Inicio de sesión automático después del registro
-      await signIn("credentials", {
-        email,
-        password,
-        callbackUrl: "/dashboard",
-      });
+      // Si Supabase requiere confirmación de email (opcional en panel), session será nulo
+      if (data?.session) {
+        router.push("/dashboard");
+      } else {
+        // En desarrollo local a veces auto-loguea, si no, lo avisamos
+        setError("Revisa tu correo para confirmar tu cuenta.");
+      }
+
     } catch {
       setError("Ocurrió un error. Inténtalo de nuevo.");
     } finally {
@@ -92,7 +108,7 @@ export default function RegisterPage() {
 
               <button
                 type="button"
-                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                onClick={handleGoogleLogin}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-background hover:bg-muted/50 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group"
               >
                 <GoogleIcon />
@@ -110,7 +126,7 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-4 py-2 mb-4">
+                <p className={`text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-2 mb-4 ${error.includes('correo') && !error.includes('incorrectos') ? 'text-green-600 bg-green-50 border-green-200' : 'text-red-500'}`}>
                   {error}
                 </p>
               )}
@@ -222,7 +238,7 @@ export default function RegisterPage() {
                 Correo en uso
               </h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Este correo electrónico ya está registrado en Cognify.
+                {modalMessage}
               </p>
               <div className="flex gap-3 w-full">
                 <Link
