@@ -175,10 +175,10 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Gráficos ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Donut — Proporción de pacientes */}
-        <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-6 flex flex-col h-full hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-6 flex flex-col h-[350px] lg:h-[400px] hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-foreground mb-4">Estado de Pacientes</h3>
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center">
@@ -194,7 +194,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Barras — Actividad semanal */}
-        <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-6 flex flex-col h-full hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-6 flex flex-col h-[350px] lg:h-[400px] hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-foreground mb-4">Actividad Semanal</h3>
           {isLoading ? (
             <div className="flex-1 flex items-end gap-3 px-4 pb-4">

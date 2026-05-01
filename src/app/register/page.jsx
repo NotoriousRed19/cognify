@@ -81,6 +81,7 @@ export default function RegisterPage() {
 
       // Si Supabase requiere confirmación de email (opcional en panel), session será nulo
       if (data?.session) {
+        sessionStorage.setItem("cognify-active-session", "true");
         router.push("/dashboard");
       } else {
         // En desarrollo local a veces auto-loguea, si no, lo avisamos

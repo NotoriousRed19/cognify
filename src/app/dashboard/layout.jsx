@@ -46,6 +46,7 @@ export default function DashboardLayout({ children }) {
   }, [router, supabase.auth]);
 
   const handleSignOut = async () => {
+    sessionStorage.removeItem("cognify-active-session");
     await supabase.auth.signOut();
     router.push("/");
   };

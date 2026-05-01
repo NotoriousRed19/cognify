@@ -54,6 +54,7 @@ export default function LoginPage() {
       if (error) {
         setError("Correo o contraseña incorrectos.");
       } else {
+        sessionStorage.setItem("cognify-active-session", "true");
         router.push("/dashboard");
       }
     } catch {
