@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
@@ -17,10 +18,24 @@ export async function GET(request) {
       const createdAt = new Date(user.created_at).getTime()
       const now = new Date().getTime()
       
-      const isNewUser = (now - createdAt) < 5000 // created less than 5 seconds ago
+      const isNewUser = (now - createdAt) < 10000 // created less than 10 seconds ago
       
       if (action === 'login' && isNewUser) {
+        // 1. Instanciamos el cliente administrador con poder absoluto
+        const supabaseAdmin = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY,
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+        
+        // 2. Cerramos la sesión en las cookies del frontend
         await supabase.auth.signOut()
+        
+        // 3. Destruimos completamente al usuario de la base de datos
+        if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY !== 'coloca_aqui_tu_service_role_key') {
+          await supabaseAdmin.auth.admin.deleteUser(user.id)
+        }
+        
         return NextResponse.redirect(`${origin}/login?error=Esta+cuenta+aún+no+está+registrada`)
       }
       
