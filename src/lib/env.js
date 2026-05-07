@@ -1,17 +1,9 @@
-/**
- * Validación de variables de entorno requeridas.
- *
- * Importar este módulo lo más temprano posible (e.g. en layout)
- * para fallar rápido si faltan credenciales.
- */
-
 const requiredEnvVars = [
   { key: "NEXT_PUBLIC_SUPABASE_URL", hint: "Supabase → Settings → API → Project URL" },
   { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", hint: "Supabase → Settings → API → Project API Keys → anon" },
 ];
 
-// Con Supabase JS no necesitamos DATABASE_URL en el cliente ni en el server, 
-// solo las URLs y Keys de la API.
+
 const missing = requiredEnvVars.filter(({ key }) => !process.env[key]);
 
 if (missing.length > 0) {
