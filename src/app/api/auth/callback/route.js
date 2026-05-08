@@ -48,6 +48,7 @@ export async function GET(request) {
     }
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=Ocurrio+un+error+con+la+autenticacion`)
+  // Si no hay código o la verificación falló, redirigimos a login con un mensaje más claro
+  // Esto es común con correos de Outlook/Microsoft donde "SafeLinks" consume el token antes que el usuario.
+  return NextResponse.redirect(`${origin}/login?error=El+enlace+ha+expirado+o+ya+fue+utilizado.+Intenta+iniciar+sesión+con+tu+contraseña.`)
 }

@@ -47,12 +47,18 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
       if (error) {
-        setError("Correo o contraseña incorrectos.");
+        if (error.message.includes("Email not confirmed")) {
+          setError("Debes confirmar tu correo electrónico antes de iniciar sesión.");
+        } else if (error.message.includes("Invalid login credentials")) {
+          setError("Correo o contraseña incorrectos.");
+        } else {
+          setError(`Error: ${error.message}`);
+        }
       } else {
         sessionStorage.setItem("cognify-active-session", "true");
         router.push("/dashboard");
