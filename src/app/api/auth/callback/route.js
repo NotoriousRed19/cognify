@@ -6,14 +6,38 @@ export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const action = searchParams.get('action')
+  const error_param = searchParams.get('error')
+  const error_description = searchParams.get('error_description')
   // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/dashboard'
+
+  // Handle OAuth provider errors (e.g., user denied access)
+  if (error_param) {
+    console.error('[Auth Callback] Provider error:', error_param, error_description)
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(error_description || 'Error de autenticación con el proveedor.')}`
+    )
+  }
 
   if (code) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
-    if (!error && data?.user) {
+    if (error) {
+      console.error('[Auth Callback] Code exchange failed:', error.message, '| code:', code?.substring(0, 8) + '...')
+      
+      // Provide specific messages based on error type
+      let errorMsg = 'El enlace ha expirado o ya fue utilizado. Intenta iniciar sesión con tu contraseña.'
+      if (error.message.includes('expired')) {
+        errorMsg = 'El enlace de verificación ha expirado. Por favor intenta iniciar sesión nuevamente.'
+      } else if (error.message.includes('already been used') || error.message.includes('used')) {
+        errorMsg = 'Este enlace ya fue utilizado. Si ya iniciaste sesión, ve al dashboard.'
+      }
+      
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(errorMsg)}`)
+    }
+
+    if (data?.user) {
       const user = data.user
       const createdAt = new Date(user.created_at).getTime()
       const now = new Date().getTime()
@@ -48,7 +72,8 @@ export async function GET(request) {
     }
   }
 
-  // Si no hay código o la verificación falló, redirigimos a login con un mensaje más claro
-  // Esto es común con correos de Outlook/Microsoft donde "SafeLinks" consume el token antes que el usuario.
-  return NextResponse.redirect(`${origin}/login?error=El+enlace+ha+expirado+o+ya+fue+utilizado.+Intenta+iniciar+sesión+con+tu+contraseña.`)
+  // No code parameter at all — this means the callback was hit without OAuth flow
+  console.error('[Auth Callback] No code parameter received. Query params:', Object.fromEntries(searchParams.entries()))
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('No se recibió código de autenticación. Intenta iniciar sesión nuevamente.')}`)
 }
+

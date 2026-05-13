@@ -2,6 +2,14 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
 export async function updateSession(request) {
+  // CRITICAL: Skip middleware processing for the auth callback route.
+  // The callback needs to run exchangeCodeForSession() first.
+  // If middleware calls getUser() before that, it can corrupt the PKCE flow
+  // and cause "link expired" errors.
+  if (request.nextUrl.pathname.startsWith('/api/auth/callback')) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
