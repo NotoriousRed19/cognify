@@ -63,6 +63,7 @@ export default function RegisterPage() {
         email: email.trim().toLowerCase(),
         password,
         options: {
+          redirectTo: `${window.location.origin}/api/auth/callback?next=/dashboard`,
           data: {
             full_name: name,
           }
