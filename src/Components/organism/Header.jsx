@@ -38,8 +38,8 @@ export default function Header() {
 
   const authRoutes = ["/login", "/register", "/forgot-password"];
   
-  // Ocultar el Header solo si estamos en las rutas de Auth o DENTRO del Dashboard
-  if (authRoutes.includes(pathname) || pathname.startsWith("/dashboard")) return null;
+  // Ocultar el Header solo si estamos en las rutas de Auth, DENTRO del Dashboard o en Admin
+  if (authRoutes.includes(pathname) || pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) return null;
 
   return (
     <header className="fixed top-0 w-full z-50 flex flex-col bg-background/80 backdrop-blur-lg shadow-sm">

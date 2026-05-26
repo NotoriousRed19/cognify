@@ -12,6 +12,10 @@ import {
   Calendar, 
   StickyNote
 } from "lucide-react";
+import BillingBanner from "@/Components/molecules/BillingBanner";
+
+// Cliente Supabase instanciado una sola vez a nivel de módulo
+const supabase = createClient();
 
 export default function DashboardLayout({ children }) {
   const [session, setSession] = useState(null);
@@ -19,15 +23,31 @@ export default function DashboardLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const supabase = createClient();
+  const [planSubscription, setPlanSubscription] = useState(null);
 
   useEffect(() => {
+    const fetchPlanSubscription = async (userId) => {
+      const { data, error } = await supabase
+        .from("Subscription")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+        
+      if (!error && data) {
+        setPlanSubscription(data);
+        if (data.plan_status === "EXPIRED" && pathname !== "/dashboard/billing") {
+          router.push("/dashboard/billing");
+        }
+      }
+    };
+
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
         router.push("/login");
       } else {
         setSession(data.session);
+        await fetchPlanSubscription(data.session.user.id);
       }
       setLoading(false);
     };
@@ -44,6 +64,13 @@ export default function DashboardLayout({ children }) {
 
     return () => subscription.unsubscribe();
   }, [router, supabase.auth]);
+
+  // Redirigir si la suscripción está expirada y tratan de navegar a otra ruta del dashboard
+  useEffect(() => {
+    if (planSubscription?.plan_status === "EXPIRED" && pathname !== "/dashboard/billing") {
+      router.push("/dashboard/billing");
+    }
+  }, [pathname, planSubscription, router]);
 
   const handleSignOut = async () => {
     sessionStorage.removeItem("cognify-active-session");
@@ -174,6 +201,7 @@ export default function DashboardLayout({ children }) {
         isSidebarCollapsed ? "md:pl-20" : "md:pl-64"
       }`}>
         <div className="h-full overflow-x-hidden">
+          <BillingBanner subscription={planSubscription} />
           {children}
         </div>
       </main>

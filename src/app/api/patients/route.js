@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth, requireActiveSubscription } from "@/lib/auth-guard";
 
 export async function GET(request) {
   try {
@@ -8,7 +8,7 @@ export async function GET(request) {
 
     const { data: patients, error } = await supabase
       .from("Patient")
-      .select("*")
+      .select("id, nombre, identificacion, celular, fecha_nacimiento, sexo, nacionalidad, createdAt")
       .order("createdAt", { ascending: false });
 
     if (error) throw error;
@@ -25,7 +25,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { user, supabase, errorResponse } = await requireAuth();
+    const { user, supabase, errorResponse } = await requireActiveSubscription();
     if (errorResponse) return errorResponse;
 
     const body = await request.json();
@@ -48,6 +48,13 @@ export async function POST(request) {
       );
     }
 
+    let fechaNac = null;
+    if (fecha_nacimiento) {
+      const d = new Date(fecha_nacimiento);
+      if (isNaN(d.getTime())) return NextResponse.json({ error: "Fecha de nacimiento inválida" }, { status: 400 });
+      fechaNac = d.toISOString();
+    }
+
     const { data: newPatient, error } = await supabase
       .from("Patient")
       .insert({
@@ -55,7 +62,7 @@ export async function POST(request) {
         nombre,
         identificacion: identificacion || null,
         celular: celular || null,
-        fecha_nacimiento: fecha_nacimiento ? new Date(fecha_nacimiento).toISOString() : null,
+        fecha_nacimiento: fechaNac,
         sexo: sexo || null,
         nacionalidad: nacionalidad || null,
         historial_medico: historial_medico || null,

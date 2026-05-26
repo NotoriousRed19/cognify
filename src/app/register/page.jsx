@@ -7,17 +7,19 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import GoogleIcon from "@/Components/atoms/GoogleIcon";
 
+const supabase = createClient();
+
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const router = useRouter();
-  const supabase = createClient();
 
   const handleGoogleLogin = async () => {
     sessionStorage.setItem("cognify-active-session", "true");
@@ -46,6 +48,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSuccess(false);
 
     if (!name || !email || !password) {
       setError("Por favor completa todos los campos.");
@@ -86,6 +89,7 @@ export default function RegisterPage() {
         router.push("/dashboard");
       } else {
         // En desarrollo local a veces auto-loguea, si no, lo avisamos
+        setIsSuccess(true);
         setError("Revisa tu correo para confirmar tu cuenta.");
       }
 
@@ -142,7 +146,7 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <p className={`text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-2 mb-4 ${error.includes('correo') && !error.includes('incorrectos') ? 'text-green-600 bg-green-50 border-green-200' : 'text-red-500'}`}>
+                <p className={`text-sm rounded-lg px-4 py-2 mb-4 border ${isSuccess ? 'text-green-600 bg-green-50 border-green-200' : 'text-red-500 bg-red-50 border-red-200'}`}>
                   {error}
                 </p>
               )}

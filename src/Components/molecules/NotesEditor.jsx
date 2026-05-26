@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Save } from 'lucide-react';
 
-export default function RichTextEditor({ initialContent = "", onSave, readOnly = false }) {
+export default function NotesEditor({ initialContent = "", onSave, readOnly = false }) {
   const cleanContent = (html) => {
     let text = html || "";
     if (text.includes("<p>")) {
@@ -23,11 +23,16 @@ export default function RichTextEditor({ initialContent = "", onSave, readOnly =
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(async () => {
-      if (onSave) {
-        await onSave(newContent);
+      try {
+        if (onSave) {
+          await onSave(newContent);
+        }
+      } catch (error) {
+        console.error("Error auto-saving notes:", error);
+      } finally {
+        setIsSaving(false);
+        setLastSaved(new Date());
       }
-      setIsSaving(false);
-      setLastSaved(new Date());
     }, 1000); // 1s delay
   }, [onSave]);
 

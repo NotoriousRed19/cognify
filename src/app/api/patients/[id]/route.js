@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-guard";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(request, { params }) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
 
     const { id } = await params;
+
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
 
     // Con Supabase JS, podemos usar select anidado si configuramos las FK correctamente
     // Si la DB tiene relaciones, podemos hacer "*, TherapySession(*), Appointment(*)"
@@ -43,6 +49,10 @@ export async function PATCH(request, { params }) {
     if (errorResponse) return errorResponse;
 
     const { id } = await params;
+
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
     const body = await request.json();
 
     const allowedFields = ["nombre", "identificacion", "celular", "fecha_nacimiento", "sexo", "nacionalidad", "historial_medico", "medicacion"];
@@ -50,7 +60,9 @@ export async function PATCH(request, { params }) {
     for (const field of allowedFields) {
       if (field in body) {
         if (field === "fecha_nacimiento" && body[field]) {
-          data[field] = new Date(body[field]).toISOString();
+          const d = new Date(body[field]);
+          if (isNaN(d.getTime())) return NextResponse.json({ error: "Fecha de nacimiento inválida" }, { status: 400 });
+          data[field] = d.toISOString();
         } else {
           data[field] = body[field] || null;
         }
@@ -84,6 +96,10 @@ export async function DELETE(request, { params }) {
     if (errorResponse) return errorResponse;
 
     const { id } = await params;
+
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
 
     const { error } = await supabase
       .from("Patient")

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format, addMonths, subMonths, startOfMonth, startOfWeek, endOfMonth, endOfWeek, isSameMonth, isSameDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, CalendarPlus, Loader2, X, Clock, User, Trash2, Pencil, CheckCircle2 } from "lucide-react";
@@ -86,12 +86,7 @@ export default function CalendarPage() {
     hora_fin: "11:00"
   });
 
-  useEffect(() => {
-    fetchAppointments();
-    fetchPatients();
-  }, []);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       const res = await fetch("/api/appointments");
       if (res.ok) {
@@ -109,9 +104,9 @@ export default function CalendarPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const res = await fetch("/api/patients");
       if (res.ok) {
@@ -121,7 +116,12 @@ export default function CalendarPage() {
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchAppointments();
+    fetchPatients();
+  }, [fetchAppointments, fetchPatients]);
 
   const handlePrevMonth = () => {
     if (calendarView === "month") setCurrentDate(subMonths(currentDate, 1));

@@ -12,6 +12,13 @@ export async function POST(request) {
       return NextResponse.json({ error: "No se proporcionó el paciente" }, { status: 400 });
     }
 
+    let fechaSesionParsed = new Date().toISOString();
+    if (fecha_sesion) {
+      const d = new Date(fecha_sesion);
+      if (isNaN(d.getTime())) return NextResponse.json({ error: "Fecha de sesión inválida" }, { status: 400 });
+      fechaSesionParsed = d.toISOString();
+    }
+
     const { data: newSession, error } = await supabase
       .from("TherapySession")
       .insert({
@@ -20,7 +27,7 @@ export async function POST(request) {
         notas: notas || null,
         tareas_pendientes: tareas_pendientes || null,
         observaciones: observaciones || null,
-        fecha_sesion: fecha_sesion ? new Date(fecha_sesion).toISOString() : new Date().toISOString(),
+        fecha_sesion: fechaSesionParsed,
         updatedAt: new Date().toISOString(),
       })
       .select()

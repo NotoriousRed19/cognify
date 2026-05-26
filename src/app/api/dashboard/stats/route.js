@@ -23,11 +23,13 @@ export async function GET() {
       .limit(5);
 
     // ── 3. Pacientes CON al menos una cita próxima ───────────────────────────
+    // TODO: Migrar a una función SQL con COUNT(DISTINCT patient_id) para mejor rendimiento
     const { data: patientsWithApptData, error: e3 } = await supabase
       .from("Appointment")
       .select('patient_id')
       .gte("fecha_inicio", now.toISOString())
-      .not('patient_id', 'is', null);
+      .not('patient_id', 'is', null)
+      .limit(10000);
       
     // Eliminar duplicados manualmente (Supabase JS no tiene DISTINCT nativo simple en select)
     const uniquePatientIds = new Set((patientsWithApptData || []).map(a => a.patient_id));
@@ -44,15 +46,17 @@ export async function GET() {
       .gte("fecha_inicio", weekStart.toISOString())
       .lte("fecha_inicio", weekEnd.toISOString());
 
-    // Agrupar por día (Lun–Dom)
+    // Agrupar por día (Lun–Dom) — usar Map para O(1) lookups
     const dayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    const appointmentsByDay = new Map();
+    (thisWeekAppointments || []).forEach((a) => {
+      const dayStr = format(new Date(a.fecha_inicio), "yyyy-MM-dd");
+      appointmentsByDay.set(dayStr, (appointmentsByDay.get(dayStr) || 0) + 1);
+    });
     const weeklyData = dayLabels.map((day, i) => {
       const dayDate = addDays(weekStart, i);
       const dayStr = format(dayDate, "yyyy-MM-dd");
-      const count = (thisWeekAppointments || []).filter(
-        (a) => format(new Date(a.fecha_inicio), "yyyy-MM-dd") === dayStr
-      ).length;
-      return { day, citas: count };
+      return { day, citas: appointmentsByDay.get(dayStr) || 0 };
     });
 
     // ── 5. Cita de hoy ────────────────────────────────────────────────────────
