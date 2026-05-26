@@ -3,7 +3,7 @@
 import { StickyNote, Calendar, Clock, Search, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import RichTextEditor from "@/Components/molecules/RichTextEditor";
+import NotesEditor from "@/Components/molecules/NotesEditor";
 
 export default function NotasPage() {
   const [sessions, setSessions] = useState([]);
@@ -192,7 +192,7 @@ export default function NotasPage() {
               </div>
               
               <div className="flex-1 p-4 overflow-y-auto">
-                <RichTextEditor 
+                <NotesEditor 
                   key={`${selectedSession.id}-${activeTab}`}
                   initialContent={selectedSession[activeTab] || ""} 
                   onSave={(content) => handleSaveField(activeTab, content)} 

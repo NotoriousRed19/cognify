@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import GoogleIcon from "@/Components/atoms/GoogleIcon";
 
+const supabase = createClient();
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,7 +16,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const handleGoogleLogin = async () => {
     sessionStorage.setItem("cognify-active-session", "true");

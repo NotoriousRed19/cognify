@@ -132,7 +132,7 @@ export default function DashboardPage() {
       {/* ── KPIs ─────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-        {isLoading ? (
+        {isLoading || !stats ? (
           <>
             <KpiSkeleton /><KpiSkeleton /><KpiSkeleton /><KpiSkeleton />
           </>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
         {/* Donut — Proporción de pacientes */}
         <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-6 flex flex-col h-[350px] lg:h-[400px] hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-foreground mb-4">Estado de Pacientes</h3>
-          {isLoading ? (
+          {isLoading || !stats ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="w-32 h-32 rounded-full bg-muted animate-pulse" />
             </div>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
         {/* Barras — Actividad semanal */}
         <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-6 flex flex-col h-[350px] lg:h-[400px] hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-foreground mb-4">Actividad Semanal</h3>
-          {isLoading ? (
+          {isLoading || !stats ? (
             <div className="flex-1 flex items-end gap-3 px-4 pb-4">
               {[40, 70, 50, 80, 30, 20, 45].map((h, i) => (
                 <div key={i} className="flex-1 bg-muted rounded-t-lg animate-pulse" style={{ height: `${h}%` }} />
@@ -249,7 +249,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {isLoading ? (
+        {isLoading || !stats ? (
           <div className="divide-y divide-border/50">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4 px-6 py-4 animate-pulse">

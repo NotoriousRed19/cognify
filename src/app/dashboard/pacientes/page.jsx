@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Users, FilePlus, Search, X, Loader2, Phone,
   IdCard, CalendarDays, ArrowRight, UserRoundX, Trash2
@@ -131,11 +131,7 @@ export default function PacientesPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const res = await fetch("/api/patients");
       const data = await res.json();
@@ -145,7 +141,11 @@ export default function PacientesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
 
   const handleDeletePatient = async (id, nombre) => {
     if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente a ${nombre}? Esta acción no se puede deshacer y borrará todas sus citas y notas asociadas.`)) return;
