@@ -39,7 +39,12 @@ export async function requireAdmin() {
   if (auth.errorResponse) return auth;
 
   const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail || auth.user.email?.toLowerCase() !== adminEmail.toLowerCase()) {
+  const userRole = auth.user.app_metadata?.role || auth.user.user_metadata?.role || 'Usuario';
+  
+  const isEmailAdmin = adminEmail && auth.user.email?.toLowerCase() === adminEmail.toLowerCase();
+  const isRoleAdmin = userRole === 'Administrador';
+
+  if (!isEmailAdmin && !isRoleAdmin) {
     return {
       ...auth,
       errorResponse: NextResponse.json(
