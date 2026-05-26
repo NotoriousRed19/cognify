@@ -11,6 +11,13 @@ export async function updateSession(request) {
     return NextResponse.next()
   }
 
+  // Redirigir la ruta antigua /admin hacia /dashboard/admin
+  if (request.nextUrl.pathname === '/admin' || request.nextUrl.pathname.startsWith('/admin/')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard/admin'
+    return NextResponse.redirect(url)
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -52,7 +59,8 @@ export async function updateSession(request) {
                           (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth'))
 
   const isAuthPath = pathname.startsWith('/login') || 
-                     pathname.startsWith('/register')
+                     pathname.startsWith('/register') ||
+                     pathname === '/'
 
   // 1. Usuario NO autenticado
   if (!user) {

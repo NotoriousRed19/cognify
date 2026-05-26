@@ -38,9 +38,6 @@ export default function DashboardLayout({ children }) {
         
       if (!error && data) {
         setPlanSubscription(data);
-        if (data.plan_status === "EXPIRED" && pathname !== "/dashboard/billing") {
-          router.push("/dashboard/billing");
-        }
       }
     };
 
@@ -68,7 +65,19 @@ export default function DashboardLayout({ children }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [router, pathname]);
+  }, [router]);
+
+  // Redirecciones basadas en rol y ruta (Client-Side Role Guard)
+  useEffect(() => {
+    if (loading || !session) return;
+    
+    const isAdmin = userRole === "Administrador";
+    if (isAdmin && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/admin')) {
+      router.push("/dashboard/admin");
+    } else if (!isAdmin && pathname.startsWith('/dashboard/admin')) {
+      router.push("/dashboard?error=unauthorized");
+    }
+  }, [pathname, userRole, session, loading, router]);
 
   // Redirigir si la suscripción está expirada y tratan de navegar a otra ruta del dashboard
   useEffect(() => {
