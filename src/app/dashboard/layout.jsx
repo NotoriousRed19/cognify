@@ -10,11 +10,14 @@ import {
   LayoutDashboard, 
   Users, 
   Calendar, 
-  StickyNote
+  StickyNote,
+  Shield
 } from "lucide-react";
+import DevRoleConsole from "@/Components/atoms/DevRoleConsole";
 
 export default function DashboardLayout({ children }) {
   const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState("Usuario");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -28,6 +31,7 @@ export default function DashboardLayout({ children }) {
         router.push("/login");
       } else {
         setSession(data.session);
+        setUserRole(data.session.user.user_metadata?.role || "Usuario");
       }
       setLoading(false);
     };
@@ -39,6 +43,7 @@ export default function DashboardLayout({ children }) {
         router.push("/login");
       } else {
         setSession(session);
+        setUserRole(session.user.user_metadata?.role || "Usuario");
       }
     });
 
@@ -61,11 +66,13 @@ export default function DashboardLayout({ children }) {
 
   if (!session) return null;
 
+  const isAdmin = userRole === "Administrador";
   const navigationOptions = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Pacientes", href: "/dashboard/pacientes", icon: Users },
     { name: "Calendario", href: "/dashboard/calendario", icon: Calendar },
     { name: "Notas de sesión", href: "/dashboard/notas", icon: StickyNote },
+    ...(isAdmin ? [{ name: "Panel Admin", href: "/dashboard/admin", icon: Shield }] : []),
   ];
 
   return (
@@ -131,9 +138,16 @@ export default function DashboardLayout({ children }) {
               <span className="text-sm font-semibold text-foreground truncate">
                 {session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || "Usuario"}
               </span>
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="text-xs text-muted-foreground truncate mb-1">
                 {session?.user?.email}
               </span>
+              <div className="flex">
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded leading-none ${
+                  isAdmin ? "bg-indigo-100 text-indigo-700" : "bg-primary/10 text-primary"
+                }`}>
+                  {userRole}
+                </span>
+              </div>
             </div>
             <button
               onClick={handleSignOut}
@@ -195,6 +209,9 @@ export default function DashboardLayout({ children }) {
             )
         })}
       </div>
+      
+      {/* Dev Console Simulator */}
+      <DevRoleConsole />
     </div>
   );
 }

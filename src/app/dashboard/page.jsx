@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, CalendarCheck, CalendarX, TrendingUp, UserPlus, CalendarClock, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Users, CalendarCheck, CalendarX, TrendingUp, UserPlus, CalendarClock, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const PatientStatusChart = dynamic(
@@ -37,6 +37,19 @@ export default function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [showUnauthorizedAlert, setShowUnauthorizedAlert] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "unauthorized") {
+      setShowUnauthorizedAlert(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      const timer = setTimeout(() => {
+        setShowUnauthorizedAlert(false);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -75,6 +88,25 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 md:p-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+
+      {showUnauthorizedAlert && (
+        <div className="p-4 bg-red-500/10 border border-red-500/30 backdrop-blur-md rounded-2xl flex items-start gap-3 text-red-700 animate-fade-in relative">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="text-sm font-bold block">Acceso Denegado</span>
+            <p className="text-xs text-red-600/90 mt-0.5 leading-relaxed">
+              No cuentas con el rol &quot;Administrador&quot; para acceder a esa sección. Puedes utilizar el simulador de roles en la esquina inferior derecha para alternar tu rol e intentar de nuevo.
+            </p>
+          </div>
+          <button 
+            onClick={() => setShowUnauthorizedAlert(false)}
+            className="text-red-500 hover:text-red-700 font-bold text-lg absolute top-3 right-4 cursor-pointer leading-none"
+            title="Cerrar advertencia"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       {/* Encabezado */}
       <div className="flex items-end justify-between">

@@ -40,28 +40,62 @@ export async function updateSession(request) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect routes based on authentication state
-  // Check if the current route is protected
-  const isProtectedPath = request.nextUrl.pathname.startsWith('/dashboard') || 
-                          request.nextUrl.pathname.startsWith('/api/') && !request.nextUrl.pathname.startsWith('/api/auth')
-  const isAuthPath = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
+  const pathname = request.nextUrl.pathname
 
-  if (isProtectedPath && !user) {
-    // If it's an API route, return 401 JSON instead of redirecting
-    if (request.nextUrl.pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  // Definición de rutas y tipos de acceso
+  const isAdminPath = pathname.startsWith('/dashboard/admin') || 
+                      pathname.startsWith('/admin') || 
+                      pathname.startsWith('/api/admin')
+
+  const isProtectedPath = pathname.startsWith('/dashboard') || 
+                          (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth'))
+
+  const isAuthPath = pathname.startsWith('/login') || 
+                     pathname.startsWith('/register')
+
+  // 1. Usuario NO autenticado
+  if (!user) {
+    if (isAdminPath || isProtectedPath) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+      }
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
     }
-    // If attempting to access a protected route without a user, redirect to login
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
   }
 
-  if (isAuthPath && user) {
-    // If already logged in and trying to go to login/register, redirect to dashboard
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // 2. Usuario autenticado
+  if (user) {
+    const userRole = user.app_metadata?.role || user.user_metadata?.role || 'Usuario'
+    const isAdmin = userRole === 'Administrador'
+
+    // Redirigir de páginas externas de auth (/login, /register) al dashboard correspondiente
+    if (isAuthPath) {
+      const url = request.nextUrl.clone()
+      url.pathname = isAdmin ? '/dashboard/admin' : '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // Un usuario con rol "Administrador" no debe acceder al panel de usuarios normales directamente
+    if (isAdmin && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/admin')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard/admin'
+      return NextResponse.redirect(url)
+    }
+
+    // Proteger páginas destinadas a administradores
+    if (isAdminPath) {
+      if (!isAdmin) {
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'Prohibido: Se requieren privilegios de administrador' }, { status: 403 })
+        }
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        url.searchParams.set('error', 'unauthorized')
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return supabaseResponse

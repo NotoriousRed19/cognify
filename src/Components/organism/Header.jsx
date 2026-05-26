@@ -62,7 +62,7 @@ export default function Header() {
           {loading ? null : user ? (
             <>
               <Link
-                href="/dashboard"
+                href={user?.user_metadata?.role === 'Administrador' ? "/dashboard/admin" : "/dashboard"}
                 className="cursor-pointer whitespace-nowrap px-4 py-1.5 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300"
               >
                 Ir al Dashboard
@@ -119,7 +119,7 @@ export default function Header() {
              {loading ? null : user ? (
                 <>
                   <Link
-                    href="/dashboard"
+                    href={user?.user_metadata?.role === 'Administrador' ? "/dashboard/admin" : "/dashboard"}
                     className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
                   >
                     Ir al Dashboard
