@@ -1,4 +1,5 @@
 import { DM_Sans, Playfair_Display } from "next/font/google";
+import { Suspense } from "react";
 import Header from "@/Components/organism/Header";
 import SessionGuard from "@/Components/providers/SessionGuard";
 
@@ -51,7 +52,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
       <body>
-        <SessionGuard />
+        <Suspense fallback={null}>
+          <SessionGuard />
+        </Suspense>
         <Header />
         {children}
       </body>

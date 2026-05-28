@@ -55,7 +55,9 @@ export async function GET(request) {
         return NextResponse.redirect(`${origin}/register?error=Esta+cuenta+ya+está+registrada`)
       }
 
-      return NextResponse.redirect(`${origin}${next}`)
+      const redirectUrl = new URL(`${origin}${next}`)
+      redirectUrl.searchParams.set('session_init', 'true')
+      return NextResponse.redirect(redirectUrl)
     }
   }
 
