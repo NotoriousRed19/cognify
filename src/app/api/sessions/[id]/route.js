@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-guard";
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function DELETE(request, { params }) {
   try {
@@ -10,8 +9,8 @@ export async function DELETE(request, { params }) {
 
     const { id } = await params;
 
-    if (!UUID_REGEX.test(id)) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "ID faltante" }, { status: 400 });
     }
 
     const { error } = await supabase

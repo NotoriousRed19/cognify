@@ -85,6 +85,7 @@ export default function CalendarPage() {
     hora_inicio: "10:00",
     hora_fin: "11:00"
   });
+  const [submitError, setSubmitError] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -94,8 +95,9 @@ export default function CalendarPage() {
         // Transformar strings a Dates para que date-fns trabaje limpio
         const parsed = (data.appointments || []).map(appt => ({
           ...appt,
-          fecha_inicio: new Date(appt.fecha_inicio),
-          fecha_fin: new Date(appt.fecha_fin)
+          // Aseguramos que el string se procese como UTC puro añadiendo T y Z
+          fecha_inicio: new Date(appt.fecha_inicio.replace(' ', 'T') + (appt.fecha_inicio.includes('Z') ? '' : 'Z')),
+          fecha_fin: new Date(appt.fecha_fin.replace(' ', 'T') + (appt.fecha_fin.includes('Z') ? '' : 'Z'))
         }));
         setAppointments(parsed);
       }
@@ -142,14 +144,24 @@ export default function CalendarPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError(null);
     setIsSubmitting(true);
     
     const inicioStr = `${formData.fecha}T${formData.hora_inicio}:00`;
     const finStr = `${formData.fecha}T${formData.hora_fin}:00`;
 
+    // Validar que la cita no sea en el pasado
+    const selectedDate = new Date(inicioStr);
+    if (selectedDate < new Date()) {
+      setSubmitError("No se pueden agendar citas en el pasado.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const payload = {
         titulo: formData.titulo,
+        // Convertir la hora local (inicioStr sin Z) a UTC enviando el formato ISO
         fecha_inicio: new Date(inicioStr).toISOString(),
         fecha_fin: new Date(finStr).toISOString(),
       };
@@ -174,10 +186,12 @@ export default function CalendarPage() {
            setFormData(prev => ({ ...prev, titulo: "", patient_id: "" }));
         }
       } else {
-        console.error("Fallo al guardar cita");
+        const errorData = await res.json().catch(() => ({}));
+        setSubmitError(errorData.error || "Fallo al guardar cita");
       }
     } catch (error) {
       console.error("Server error", error);
+      setSubmitError("Error de conexión al guardar la cita");
     } finally {
       setIsSubmitting(false);
     }
@@ -190,15 +204,29 @@ export default function CalendarPage() {
   };
 
   const handleAppointmentClick = (appt) => {
-    setModalMode("edit");
     setSelectedApptId(appt.id);
-    setFormData({
-      titulo: appt.titulo,
-      patient_id: appt.patient_id || "",
-      fecha: format(appt.fecha_inicio, "yyyy-MM-dd"),
-      hora_inicio: format(appt.fecha_inicio, "HH:mm"),
-      hora_fin: format(appt.fecha_fin, "HH:mm")
-    });
+    if (appt.status === "PENDING_APPROVAL") {
+      setModalMode("review");
+      setFormData({
+        titulo: appt.titulo,
+        patient_id: "",
+        fecha: format(appt.fecha_inicio, "yyyy-MM-dd"),
+        hora_inicio: format(appt.fecha_inicio, "HH:mm"),
+        hora_fin: format(appt.fecha_fin, "HH:mm"),
+        guest_details: appt.guest_details,
+        guest_name: appt.guest_name,
+        guest_contact: appt.guest_contact
+      });
+    } else {
+      setModalMode("edit");
+      setFormData({
+        titulo: appt.titulo,
+        patient_id: appt.patient_id || "",
+        fecha: format(appt.fecha_inicio, "yyyy-MM-dd"),
+        hora_inicio: format(appt.fecha_inicio, "HH:mm"),
+        hora_fin: format(appt.fecha_fin, "HH:mm")
+      });
+    }
     setIsModalOpen(true);
   };
 
@@ -228,6 +256,31 @@ export default function CalendarPage() {
       if (res.ok) fetchAppointments();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleReviewAction = async (actionStatus) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(`/api/appointments/${selectedApptId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: actionStatus })
+      });
+      if (res.ok) {
+        setModalMode("agenda");
+        setIsModalOpen(false);
+        fetchAppointments();
+        fetchPatients();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setSubmitError(data.error || "Error al procesar la cita");
+      }
+    } catch (error) {
+      setSubmitError("Error de conexión");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -285,36 +338,49 @@ export default function CalendarPage() {
               </span>
             </div>
 
-            {/* Renderizar Indicadores Dinámicos */}
             <div className={`mt-2 flex overflow-hidden ${calendarView === "day" ? "flex-col gap-2.5" : "flex-wrap gap-1.5"}`}>
               {dayAppointments.sort((a, b) => a.fecha_inicio - b.fecha_inicio).map(appt => {
                 const isPatientAppt = Boolean(appt.patient_id);
                 const isCompleted = appt.estado === "COMPLETADA";
+                const isPending = appt.status === "PENDING_APPROVAL";
                 
+                let borderColorClass = isPatientAppt ? 'border-l-violet-500' : 'border-l-emerald-500';
+                let bgTintClass = isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500';
+                
+                if (isPending) {
+                  borderColorClass = 'border-l-orange-500 border-dashed';
+                  bgTintClass = 'bg-orange-500';
+                }
+
                 if (calendarView === "day") {
                   return (
                     <div 
                       key={appt.id} 
-                      className={`relative overflow-hidden p-3 rounded-xl border border-border/50 border-l-4 shadow-sm flex items-center justify-between gap-3 transition-all cursor-default bg-card ${isPatientAppt ? 'border-l-violet-500' : 'border-l-emerald-500'}`}
+                      className={`relative overflow-hidden p-3 rounded-xl border border-border/50 border-l-4 shadow-sm flex items-center justify-between gap-3 transition-all cursor-default bg-card ${borderColorClass}`}
                     >
                       {/* Ambient Tint */}
-                      <div className={`absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none ${isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500'}`} />
+                      <div className={`absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none ${bgTintClass}`} />
                       
                       <div className="relative z-10 flex flex-col gap-1 w-full pl-1">
                         <div className="flex items-center justify-between w-full">
-                           <h4 className={`font-bold text-sm text-foreground ${isCompleted ? 'opacity-70' : ''}`}>{appt.titulo}</h4>
+                           <h4 className={`font-bold text-sm text-foreground ${isCompleted ? 'opacity-70' : ''}`}>
+                             {appt.titulo} {isPending && <span className="text-orange-500 ml-1 text-xs uppercase bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 rounded">Pendiente</span>}
+                           </h4>
                            <div className="flex gap-1.5">
-                             <button
-                               onClick={(e) => { e.stopPropagation(); handleToggleCompleted(appt); }}
-                               className={`p-1.5 shrink-0 shadow-sm border border-border/50 rounded-lg transition-colors ${isCompleted ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-background text-muted-foreground/60 hover:text-emerald-500'}`}
-                             >
-                               <CheckCircle2 className="w-3.5 h-3.5" />
-                             </button>
+                             {!isPending && (
+                               <button
+                                 onClick={(e) => { e.stopPropagation(); handleToggleCompleted(appt); }}
+                                 className={`p-1.5 shrink-0 shadow-sm border border-border/50 rounded-lg transition-colors ${isCompleted ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-background text-muted-foreground/60 hover:text-emerald-500'}`}
+                               >
+                                 <CheckCircle2 className="w-3.5 h-3.5" />
+                               </button>
+                             )}
                            </div>
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-1 text-[11px] text-muted-foreground font-medium mt-1">
                           <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {format(appt.fecha_inicio, "h:mm a")} - {format(appt.fecha_fin, "h:mm a")}</span>
                           {isPatientAppt && <span className="flex items-center gap-1.5"><User className="w-3 h-3" /> {appt.patient?.nombre}</span>}
+                          {isPending && <span className="flex items-center gap-1.5 text-orange-600"><User className="w-3 h-3" /> {appt.guest_name}</span>}
                         </div>
                       </div>
                     </div>
@@ -325,7 +391,7 @@ export default function CalendarPage() {
                 return (
                   <div 
                     key={appt.id} 
-                    className={`w-2.5 h-2.5 rounded-full shadow-sm hover:scale-125 transition-transform ${isCompleted ? 'bg-muted-foreground opacity-50' : isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500'}`}
+                    className={`w-2.5 h-2.5 rounded-full shadow-sm hover:scale-125 transition-transform ${isCompleted ? 'bg-muted-foreground opacity-50' : isPending ? 'bg-orange-500' : isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500'}`}
                     title={appt.titulo}
                   />
                 );
@@ -407,6 +473,7 @@ export default function CalendarPage() {
               onClick={() => {
                 setModalMode("create");
                 setSelectedApptId(null);
+                setSubmitError(null);
                 setFormData({ 
                   titulo: "", patient_id: "", 
                   fecha: format(new Date(), "yyyy-MM-dd"), 
@@ -501,18 +568,21 @@ export default function CalendarPage() {
                   .map(appt => {
                       const isPatientAppt = Boolean(appt.patient_id);
                       const isCompleted = appt.estado === "COMPLETADA";
+                      const isPending = appt.status === "PENDING_APPROVAL";
                          
                       return (
-                         <div key={appt.id} className={`p-4 rounded-xl border border-l-4 shadow-sm flex flex-col gap-2 relative overflow-hidden transition-all bg-card border-border/50 hover:shadow-md ${isPatientAppt ? 'border-l-violet-500' : 'border-l-emerald-500'}`}>
+                         <div key={appt.id} className={`p-4 rounded-xl border border-l-4 shadow-sm flex flex-col gap-2 relative overflow-hidden transition-all bg-card border-border/50 hover:shadow-md ${isPending ? 'border-l-orange-500' : isPatientAppt ? 'border-l-violet-500' : 'border-l-emerald-500'}`}>
                             {/* Ambient Tint */}
-                            <div className={`absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none ${isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500'}`} />
+                            <div className={`absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none ${isPending ? 'bg-orange-500' : isPatientAppt ? 'bg-violet-500' : 'bg-emerald-500'}`} />
                             
                             <div className="flex justify-between items-start gap-4 relative z-10">
                               <div className="flex-1">
-                                <h3 className={`font-bold text-base leading-tight text-foreground ${isCompleted ? 'opacity-60' : ''}`}>{appt.titulo}</h3>
+                                <h3 className={`font-bold text-base leading-tight text-foreground ${isCompleted ? 'opacity-60' : ''}`}>
+                                  {appt.titulo} {isPending && <span className="text-orange-500 ml-1 text-[10px] uppercase bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 rounded">Pendiente</span>}
+                                </h3>
                                 <div className="text-[13px] text-muted-foreground flex flex-col gap-2 mt-3">
                                   <p className="flex items-center gap-2 font-medium">
-                                    <span className={`p-1.5 rounded-lg shadow-sm ${isPatientAppt ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
+                                    <span className={`p-1.5 rounded-lg shadow-sm ${isPending ? 'bg-orange-500/10 text-orange-600' : isPatientAppt ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
                                       <Clock className="w-3.5 h-3.5" /> 
                                     </span>
                                     {format(appt.fecha_inicio, "h:mm a")} - {format(appt.fecha_fin, "h:mm a")}
@@ -525,22 +595,32 @@ export default function CalendarPage() {
                                        {appt.patient.nombre}
                                      </p>
                                   )}
+                                  {isPending && (
+                                     <p className="flex items-center gap-2 font-medium text-orange-600">
+                                       <span className="p-1.5 rounded-lg shadow-sm bg-orange-500/10 text-orange-600">
+                                          <User className="w-3.5 h-3.5" />
+                                       </span>
+                                       {appt.guest_name}
+                                     </p>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex flex-col gap-2 shrink-0">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleToggleCompleted(appt); }}
-                                  className={`p-2 shadow-sm border rounded-xl transition-colors ${isCompleted ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-background text-muted-foreground/60 border-border/50 hover:text-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10'}`}
-                                  title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                >
-                                  <CheckCircle2 className="w-4 h-4" />
-                                </button>
+                                {!isPending && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleToggleCompleted(appt); }}
+                                    className={`p-2 shadow-sm border rounded-xl transition-colors ${isCompleted ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-background text-muted-foreground/60 border-border/50 hover:text-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10'}`}
+                                    title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </button>
+                                )}
                                 <button 
                                   onClick={() => handleAppointmentClick(appt)} 
-                                  className="p-2 shrink-0 bg-background shadow-sm border border-border/50 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                                  title="Editar"
+                                  className={`p-2 shrink-0 bg-background shadow-sm border border-border/50 rounded-xl hover:bg-muted transition-colors ${isPending ? 'text-orange-500 border-orange-200 hover:bg-orange-50 hover:border-orange-300' : 'text-muted-foreground hover:text-foreground'}`}
+                                  title={isPending ? "Revisar" : "Editar"}
                                 >
-                                  <Pencil className="w-4 h-4" />
+                                  {isPending ? <CheckCircle2 className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
                                 </button>
                               </div>
                             </div>
@@ -558,6 +638,7 @@ export default function CalendarPage() {
                       hora_inicio: "10:00", hora_fin: "11:00" 
                     }));
                     setSelectedApptId(null);
+                    setSubmitError(null);
                     setModalMode("create");
                   }}
                   className="w-full flex items-center justify-center py-3.5 mt-4 rounded-xl border border-dashed border-primary/50 text-primary hover:bg-primary/5 font-bold transition-all"
@@ -565,6 +646,54 @@ export default function CalendarPage() {
                   <CalendarPlus className="w-4 h-4 mr-2" />
                   Nueva Cita
                 </button>
+              </div>
+            ) : modalMode === "review" ? (
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                    <h3 className="font-bold text-orange-900 mb-1">Solicitud de Reserva</h3>
+                    <p className="text-sm text-orange-800">
+                      Un paciente quiere agendar una cita el <strong>{formData.fecha}</strong> a las <strong>{formData.hora_inicio}</strong>.
+                      Verifica que el pago haya sido recibido antes de aprobar la cita.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-slate-900 border-b pb-2">Datos del Paciente</h4>
+                    <ul className="text-sm space-y-2 text-slate-700">
+                      <li><strong>Nombre:</strong> {formData.guest_details?.nombre} {formData.guest_details?.apellido}</li>
+                      <li><strong>Cédula / Identidad:</strong> {formData.guest_details?.identificacion}</li>
+                      <li><strong>Teléfono / WhatsApp:</strong> {formData.guest_details?.celular}</li>
+                      <li><strong>Nacionalidad:</strong> {formData.guest_details?.nacionalidad}</li>
+                      <li><strong>Nacimiento:</strong> {formData.guest_details?.fecha_nacimiento}</li>
+                    </ul>
+                  </div>
+
+                  {submitError && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-medium text-center">
+                      {submitError}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-border/50 bg-muted/10 shrink-0 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleReviewAction("REJECTED")}
+                    className="flex items-center justify-center py-3 px-4 rounded-xl border border-rose-500 text-rose-600 hover:bg-rose-50 font-bold transition-all disabled:opacity-50"
+                  >
+                    Rechazar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleReviewAction("CONFIRMED")}
+                    className="flex items-center justify-center py-3 px-4 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-md transition-all disabled:opacity-50"
+                  >
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aprobar Cita"}
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -642,6 +771,12 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
+                {submitError && (
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-medium text-center">
+                    {submitError}
+                  </div>
+                )}
+
               </form>
             </div>
               <div className={`p-4 border-t border-border/50 bg-muted/10 shrink-0 ${modalMode === "edit" ? "grid grid-cols-2 gap-3" : "grid grid-cols-[auto_1fr] gap-3"}`}>
@@ -655,9 +790,10 @@ export default function CalendarPage() {
                         <button
                           type="button"
                           onClick={handleDeleteAppointment}
-                          className="flex items-center justify-center py-3 px-4 rounded-xl border border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white font-bold transition-all duration-300"
+                          className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white font-bold transition-all duration-300"
                         >
                           <Trash2 className="w-5 h-5" />
+                          <span className="hidden sm:inline">Borrar</span>
                         </button>
                         <button 
                           form="appointmentForm"

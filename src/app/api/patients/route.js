@@ -48,6 +48,33 @@ export async function POST(request) {
       );
     }
 
+    if (identificacion || celular) {
+      const orConditions = [];
+      if (identificacion) orConditions.push(`identificacion.eq.${identificacion}`);
+      // Only check for duplicate celular if there's actually a number (avoid checking if it's just '+')
+      if (celular && celular.length > 1) orConditions.push(`celular.eq.${celular}`);
+      
+      if (orConditions.length > 0) {
+        const { data: existingPatients, error: searchError } = await supabase
+          .from("Patient")
+          .select("identificacion, celular")
+          .eq("doctor_id", user.id)
+          .or(orConditions.join(","));
+
+        if (searchError) throw searchError;
+
+        if (existingPatients && existingPatients.length > 0) {
+          const duplicate = existingPatients[0];
+          if (identificacion && duplicate.identificacion === identificacion) {
+            return NextResponse.json({ error: "Ya existe un paciente registrado con este número de identificación." }, { status: 400 });
+          }
+          if (celular && duplicate.celular === celular) {
+            return NextResponse.json({ error: "Ya existe un paciente registrado con este número de celular." }, { status: 400 });
+          }
+        }
+      }
+    }
+
     let fechaNac = null;
     if (fecha_nacimiento) {
       const d = new Date(fecha_nacimiento);

@@ -118,6 +118,7 @@ export default function PacientesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [submitError, setSubmitError] = useState(null);
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -164,12 +165,21 @@ export default function PacientesPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let newValue = value;
+    
+    if (name === "identificacion") {
+      newValue = value.replace(/[^0-9]/g, "");
+    } else if (name === "celular") {
+      newValue = value.replace(/[^0-9+]/g, "");
+    }
+    
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const res = await fetch("/api/patients", {
         method: "POST",
@@ -182,10 +192,12 @@ export default function PacientesPage() {
         setIsModalOpen(false);
         setFormData({ nombre: "", identificacion: "", celular: "", fecha_nacimiento: "", sexo: "", nacionalidad: "", historial_medico: "", medicacion: "" });
       } else {
-        alert("Ocurrió un error al intentar guardar el paciente.");
+        const errorData = await res.json().catch(() => ({}));
+        setSubmitError(errorData.error || "Ocurrió un error al intentar guardar el paciente.");
       }
     } catch (error) {
       console.error("Error submitting:", error);
+      setSubmitError("Ocurrió un error de red al intentar guardar el paciente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -237,7 +249,10 @@ export default function PacientesPage() {
             )}
           </div>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setSubmitError(null);
+              setIsModalOpen(true);
+            }}
             className="flex shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl bg-gradient-primary text-white font-medium hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 items-center gap-2 text-sm"
           >
             <FilePlus className="w-4 h-4" />
@@ -283,7 +298,10 @@ export default function PacientesPage() {
               Comienza creando el expediente de tu primer paciente. Solo toma unos segundos.
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setSubmitError(null);
+                setIsModalOpen(true);
+              }}
               className="px-6 py-2.5 rounded-xl bg-gradient-primary text-white font-semibold text-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
             >
               <FilePlus className="w-4 h-4" />
@@ -342,6 +360,11 @@ export default function PacientesPage() {
 
             {/* Formulario */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {submitError && (
+                <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-600 font-medium animate-in fade-in zoom-in-95 duration-200">
+                  {submitError}
+                </div>
+              )}
               <form id="patientForm" onSubmit={handleSubmit} className="space-y-6">
 
                 {/* Datos Personales */}
@@ -420,14 +443,34 @@ export default function PacientesPage() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-muted-foreground">Nacionalidad</label>
-                      <input
-                        type="text"
+                      <select
                         name="nacionalidad"
-                        placeholder="Ej: Colombiana"
                         value={formData.nacionalidad}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 bg-muted/30 border border-border/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      />
+                        className="w-full px-4 py-2.5 bg-muted/30 border border-border/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Boliviana">Boliviana</option>
+                        <option value="Chilena">Chilena</option>
+                        <option value="Colombiana">Colombiana</option>
+                        <option value="Costarricense">Costarricense</option>
+                        <option value="Cubana">Cubana</option>
+                        <option value="Dominicana">Dominicana</option>
+                        <option value="Ecuatoriana">Ecuatoriana</option>
+                        <option value="Española">Española</option>
+                        <option value="Guatemalteca">Guatemalteca</option>
+                        <option value="Hondureña">Hondureña</option>
+                        <option value="Mexicana">Mexicana</option>
+                        <option value="Nicaragüense">Nicaragüense</option>
+                        <option value="Panameña">Panameña</option>
+                        <option value="Paraguaya">Paraguaya</option>
+                        <option value="Peruana">Peruana</option>
+                        <option value="Salvadoreña">Salvadoreña</option>
+                        <option value="Uruguaya">Uruguaya</option>
+                        <option value="Venezolana">Venezolana</option>
+                        <option value="Otra">Otra</option>
+                      </select>
                     </div>
                   </div>
                 </div>

@@ -71,7 +71,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
@@ -85,8 +85,8 @@ export default function AdminPage() {
 
   if (error) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background p-4">
-        <div className="max-w-md w-full bg-destructive/5 border border-destructive/20 rounded-[2rem] p-8 text-center">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full bg-destructive/5 border border-destructive/20 rounded-4xl p-8 text-center">
           <ShieldAlert className="w-12 h-12 text-destructive mx-auto mb-4 opacity-80" strokeWidth={1.5} />
           <h2 className="text-xl font-bold text-destructive mb-2 tracking-tight">Acceso Denegado</h2>
           <p className="text-muted-foreground mb-6 text-sm">{error}</p>
@@ -106,7 +106,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background relative overflow-hidden selection:bg-primary/20">
+    <div className="min-h-dvh bg-background relative overflow-hidden selection:bg-primary/20">
       {/* Soft glowing orb in background */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -161,7 +161,7 @@ export default function AdminPage() {
               <span className="text-[10px] tracking-[0.2em] font-bold text-primary uppercase">Módulo Administrativo</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-foreground">
-              Gestión de <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Plataforma</span>
+              Gestión de <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent">Plataforma</span>
             </h1>
             <p className="text-muted-foreground max-w-[65ch] text-lg leading-relaxed">
               Supervisa el acceso, gestiona suscripciones y administra la base de datos de profesionales activos en Cognify.
@@ -180,8 +180,8 @@ export default function AdminPage() {
         </div>
 
         {/* Double-Bezel Card Container */}
-        <div className="p-2 rounded-[2.5rem] bg-foreground/[0.02] border border-foreground/[0.04]">
-          <div className="bg-card rounded-[calc(2.5rem-0.5rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] border border-border/50 overflow-hidden relative">
+        <div className="p-2 rounded-[2.5rem] bg-foreground/2 border border-foreground/4">
+          <div className="bg-card rounded-4xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] border border-border/50 overflow-hidden relative">
             
             {/* Header Toolbar */}
             <div className="px-6 py-4 border-b border-border/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/20">
@@ -247,7 +247,7 @@ export default function AdminPage() {
                     >
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/10 flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary/20 to-accent/20 border border-primary/10 flex items-center justify-center shrink-0">
                             <span className="text-primary font-bold text-sm">
                               {(user.name?.[0] || user.email[0]).toUpperCase()}
                             </span>

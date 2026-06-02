@@ -32,7 +32,7 @@ export async function GET(request) {
     if (error) throw error;
 
     // Filtrar al administrador de la lista para evitar que se suspenda a sí mismo por error
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+    const adminEmail = 'mauriciocotufa@gmail.com';
     const filteredUsers = users.filter(u => u.email?.toLowerCase() !== adminEmail);
 
     return NextResponse.json({ users: filteredUsers }, { status: 200 });

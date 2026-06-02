@@ -95,7 +95,7 @@ export default function DashboardPage() {
           <div className="flex-1">
             <span className="text-sm font-bold block">Acceso Denegado</span>
             <p className="text-xs text-red-600/90 mt-0.5 leading-relaxed">
-              No cuentas con el rol &quot;Administrador&quot; para acceder a esa sección. Puedes utilizar el simulador de roles en la esquina inferior derecha para alternar tu rol e intentar de nuevo.
+              No cuentas con el rol &quot;Administrador&quot; para acceder a esa sección.
             </p>
           </div>
           <button 

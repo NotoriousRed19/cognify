@@ -1,6 +1,6 @@
 "use client";
 
-import { StickyNote, Calendar, Clock, Search, ChevronRight } from "lucide-react";
+import { StickyNote, Calendar, Clock, Search, ChevronRight, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import NotesEditor from "@/Components/molecules/NotesEditor";
@@ -40,6 +40,19 @@ export default function NotasPage() {
 
     fetchSessions();
   }, [supabase]);
+
+  const handleDeleteSession = async () => {
+    if (!selectedSession) return;
+    if (!confirm("¿Estás seguro de que deseas eliminar esta nota clínica? Esta acción no se puede deshacer.")) return;
+
+    const res = await fetch(`/api/sessions/${selectedSession.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setSessions(prev => prev.filter(s => s.id !== selectedSession.id));
+      setSelectedSession(null);
+    } else {
+      alert("Ocurrió un error al intentar eliminar la nota clínica.");
+    }
+  };
 
   const handleSaveField = async (field, htmlContent) => {
     if (!selectedSession) return;
@@ -163,11 +176,20 @@ export default function NotasPage() {
                   </div>
                 </div>
                 
-                {selectedSession.updatedAt && (
-                  <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1 bg-muted px-2 py-1 rounded-md border border-border/50">
-                    <Clock className="w-3 h-3" /> Editado: {formatDate(selectedSession.updatedAt)}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {selectedSession.updatedAt && (
+                    <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1 bg-muted px-2 py-1 rounded-md border border-border/50">
+                      <Clock className="w-3 h-3" /> Editado: {formatDate(selectedSession.updatedAt)}
+                    </span>
+                  )}
+                  <button
+                    onClick={handleDeleteSession}
+                    className="p-2 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    title="Eliminar nota clínica"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* TABS */}

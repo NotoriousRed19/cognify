@@ -84,7 +84,7 @@ export default function DevRoleConsole() {
   const isAdmin = role === "Administrador";
 
   return (
-    <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-[999] animate-fade-in">
+    <div className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-999 animate-fade-in">
       <div className="bg-card/85 backdrop-blur-md border border-border/80 rounded-2xl shadow-elevated p-4 max-w-xs transition-all duration-300 hover:border-primary/30">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>

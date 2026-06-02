@@ -11,9 +11,9 @@ import {
   Users, 
   Calendar, 
   StickyNote,
-  Shield
+  Shield,
+  Settings
 } from "lucide-react";
-import DevRoleConsole from "@/Components/atoms/DevRoleConsole";
 import BillingBanner from "@/Components/molecules/BillingBanner";
 
 // Cliente Supabase instanciado una sola vez a nivel de módulo
@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }) {
         router.push("/login");
       } else {
         setSession(data.session);
-        setUserRole(data.session.user.user_metadata?.role || "Usuario");
+        setUserRole(data.session.user.email?.toLowerCase() === "mauriciocotufa@gmail.com" ? "Administrador" : "Usuario");
         await fetchPlanSubscription(data.session.user.id);
       }
       setLoading(false);
@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }) {
         router.push("/login");
       } else {
         setSession(session);
-        setUserRole(session.user.user_metadata?.role || "Usuario");
+        setUserRole(session.user.email?.toLowerCase() === "mauriciocotufa@gmail.com" ? "Administrador" : "Usuario");
       }
     });
 
@@ -108,6 +108,7 @@ export default function DashboardLayout({ children }) {
     { name: "Pacientes", href: "/dashboard/pacientes", icon: Users },
     { name: "Calendario", href: "/dashboard/calendario", icon: Calendar },
     { name: "Notas de sesión", href: "/dashboard/notas", icon: StickyNote },
+    { name: "Configuración", href: "/dashboard/configuracion", icon: Settings },
     ...(isAdmin ? [{ name: "Panel Admin", href: "/dashboard/admin", icon: Shield }] : []),
   ];
 
@@ -246,9 +247,6 @@ export default function DashboardLayout({ children }) {
             )
         })}
       </div>
-      
-      {/* Dev Console Simulator */}
-      <DevRoleConsole />
     </div>
   );
 }

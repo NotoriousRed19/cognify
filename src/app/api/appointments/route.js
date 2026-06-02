@@ -1,18 +1,53 @@
 import { NextResponse } from "next/server";
 import { requireAuth, requireActiveSubscription } from "@/lib/auth-guard";
+import { z } from "zod";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const CreateAppointmentSchema = z.object({
+  titulo: z.string().min(1, "Falta el título").max(255),
+  fecha_inicio: z.string().datetime("La fecha de inicio debe ser ISO 8601"),
+  fecha_fin: z.string().datetime("La fecha de fin debe ser ISO 8601"),
+  patient_id: z.string().regex(UUID_REGEX, "patient_id inválido").nullable().optional()
+}).refine(data => {
+  const start = new Date(data.fecha_inicio);
+  const end = new Date(data.fecha_fin);
+  return end > start;
+}, {
+  message: "La fecha de fin debe ser posterior a la de inicio",
+  path: ["fecha_fin"]
+});
 
 export async function GET(request) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
 
-    const { data: appointments, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get("start_date");
+    const endDate = searchParams.get("end_date");
+
+    let query = supabase
       .from("Appointment")
       .select(`
         *,
         patient:Patient ( nombre )
       `)
       .order("fecha_inicio", { ascending: true });
+
+    if (startDate) {
+      query = query.gte("fecha_inicio", startDate);
+    }
+    if (endDate) {
+      query = query.lte("fecha_inicio", endDate);
+    }
+    
+    // Si no mandan fechas, limitamos a 500 por seguridad (paginación básica preventiva)
+    if (!startDate && !endDate) {
+      query = query.limit(500);
+    }
+
+    const { data: appointments, error } = await query;
 
     if (error) throw error;
 
@@ -31,46 +66,27 @@ export async function POST(request) {
     const { user, supabase, errorResponse } = await requireActiveSubscription();
     if (errorResponse) return errorResponse;
 
-    const body = await request.json();
-    const {
-      titulo,
-      fecha_inicio,
-      fecha_fin,
-      patient_id
-    } = body;
+    const rawBody = await request.json();
+    const parsed = CreateAppointmentSchema.safeParse(rawBody);
 
-    if (!titulo || !fecha_inicio || !fecha_fin) {
-      return NextResponse.json(
-        { error: "Faltan parámetros de tiempo o título obligatorios" },
-        { status: 400 }
-      );
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos", details: parsed.error.errors }, { status: 400 });
     }
 
-    // Validar que las fechas son válidas
-    const startDate = new Date(fecha_inicio);
-    const endDate = new Date(fecha_fin);
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return NextResponse.json(
-        { error: "Las fechas proporcionadas no son válidas" },
-        { status: 400 }
-      );
-    }
+    const { titulo, fecha_inicio, fecha_fin, patient_id } = parsed.data;
 
-    if (endDate <= startDate) {
-      return NextResponse.json(
-        { error: "La fecha de fin debe ser posterior a la de inicio" },
-        { status: 400 }
-      );
-    }
+    // Verificar que el paciente pertenece al doctor
+    if (patient_id) {
+      const { data: patient } = await supabase
+        .from("Patient")
+        .select("id")
+        .eq("id", patient_id)
+        .eq("doctor_id", user.id)
+        .single();
 
-    if (patient_id && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(patient_id)) {
-      return NextResponse.json({ error: "patient_id inválido" }, { status: 400 });
-    }
-
-    const dInicio = new Date(fecha_inicio);
-    const dFin = new Date(fecha_fin);
-    if (isNaN(dInicio.getTime()) || isNaN(dFin.getTime())) {
-      return NextResponse.json({ error: "Fechas inválidas" }, { status: 400 });
+      if (!patient) {
+        return NextResponse.json({ error: "Paciente inválido o no autorizado" }, { status: 403 });
+      }
     }
 
     const { data: newAppointment, error } = await supabase
@@ -78,8 +94,8 @@ export async function POST(request) {
       .insert({
         id: crypto.randomUUID(),
         titulo,
-        fecha_inicio: dInicio.toISOString(),
-        fecha_fin: dFin.toISOString(),
+        fecha_inicio,
+        fecha_fin,
         patient_id: patient_id || null,
         doctor_id: user.id,
         updatedAt: new Date().toISOString(),

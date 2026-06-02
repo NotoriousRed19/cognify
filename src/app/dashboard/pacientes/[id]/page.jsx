@@ -34,7 +34,7 @@ function AppointmentEntry({ appointment, session, upcoming, onAddNote, onDeleteN
   const [expanded, setExpanded] = useState(false);
   const apptDate = new Date(appointment.fecha_inicio);
   const apptEnd  = new Date(appointment.fecha_fin);
-  const past     = isPast(apptEnd);
+  const past     = isPast(apptEnd) || appointment.estado === "COMPLETADA";
 
   let statusLabel, statusColor, StatusIcon, cardBorder;
   if (upcoming) {
@@ -306,10 +306,22 @@ export default function PatientProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patient_id: patient.id,
-          ...sessionForm,
+          notas: sessionForm.notas,
+          tareas_pendientes: sessionForm.tareas_pendientes,
+          observaciones: sessionForm.observaciones,
+          // Evitar que el UTC shift atrase un día la nota agregando las 12 del mediodía en UTC
+          fecha_sesion: sessionForm.fecha_sesion ? sessionForm.fecha_sesion + "T12:00:00Z" : undefined,
         }),
       });
       if (res.ok) {
+        if (preselectedAppt) {
+          // Si había una cita seleccionada, la pasamos a COMPLETADA
+          await fetch(`/api/appointments/${preselectedAppt.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ estado: "COMPLETADA" })
+          });
+        }
         await fetchPatientDetail();
         setIsSessionModalOpen(false);
         setPreselectedAppt(null);
@@ -400,17 +412,22 @@ export default function PatientProfilePage() {
     const matchedSessionIds = new Set();
 
     for (const appt of appointments) {
-      const apptStart = new Date(appt.fecha_inicio);
       const apptEnd   = new Date(appt.fecha_fin);
       const session   = findSessionForAppointment(sesiones, appt);
       if (session) matchedSessionIds.add(session.id);
 
-      if (isFuture(apptStart)) {
+      const isCompleted = appt.estado === "COMPLETADA";
+      const isPastEnd = isPast(apptEnd);
+
+      if (isCompleted || isPastEnd) {
+        if (session) {
+          completedWithList.push({ appt, session, upcoming: false });
+        } else {
+          withoutList.push({ appt, session: null, upcoming: false });
+        }
+      } else {
+        // Citas futuras o en curso que no han sido marcadas como completadas
         upcomingList.push({ appt, session: null, upcoming: true });
-      } else if (isPast(apptEnd) && session) {
-        completedWithList.push({ appt, session, upcoming: false });
-      } else if (isPast(apptEnd) && !session) {
-        withoutList.push({ appt, session: null, upcoming: false });
       }
     }
 

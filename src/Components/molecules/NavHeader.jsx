@@ -23,6 +23,11 @@ export default function NavHeader({ className, wrapperClassName }) {
           Precios
         </Link>
       </li>
+      <li>
+        <Link href="/book" className={className}>
+          Reservar cita
+        </Link>
+      </li>
     </ul>
   );
 }
