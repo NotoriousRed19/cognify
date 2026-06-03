@@ -48,8 +48,12 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section id="Funciones" className="py-24 bg-background">
-      <div className="container mx-auto px-6">
+    <section id="Funciones" className="relative py-24 bg-background overflow-hidden">
+      {/* Background ambient blobs to make glassmorphism visible */}
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-accent/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+      <div className="container relative z-10 mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-lg text-accent uppercase tracking-wider">
             Funcionalidades
@@ -66,16 +70,27 @@ export default function FeaturesSection() {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature) => (
-            <div key={feature.title} className="group hover-card">
-              <div className="bg-gradient-primary w-12 h-12 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <feature.icon className="w-6 h-6 text-white" />
+            <div key={feature.title} className="relative group/card">
+              {/* Animated Gradient Border effect */}
+              <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-brand-gradient to-transparent opacity-20 group-hover/card:opacity-40 transition-opacity duration-500 blur-sm pointer-events-none"></div>
+
+              <div className="group hover-card relative overflow-hidden bg-card/80 backdrop-blur-xl border border-border/50 rounded-[2rem] p-8 shadow-xl transition-transform duration-500 hover:-translate-y-2">
+                {/* Decorative inner background elements */}
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 blur-[40px] rounded-full pointer-events-none group-hover/card:bg-primary/30 transition-colors duration-500"></div>
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-accent/20 blur-[40px] rounded-full pointer-events-none group-hover/card:bg-accent/30 transition-colors duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="bg-gradient-primary w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
+                    <feature.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-heading font-bold text-foreground mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-heading font-bold text-foreground mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>

@@ -59,25 +59,36 @@ const AUTO_SCROLL_INTERVAL = 4000;
 
 function TestimonialCard({ testimonial }) {
   return (
-    <div className="p-8 rounded-2xl bg-card border border-border/50 shadow-soft hover:shadow-card transition-all duration-300">
-      <div className="flex gap-1 mb-4">
-        {Array.from({ length: testimonial.stars }).map((_, i) => (
-          <Star key={i} className="w-5 h-5 text-accent fill-accent" />
-        ))}
+    <div className="relative group/card h-full">
+      {/* Animated Gradient Border effect */}
+      <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-brand-gradient to-transparent opacity-20 group-hover/card:opacity-40 transition-opacity duration-500 blur-sm pointer-events-none"></div>
+
+      <div className="relative h-full overflow-hidden p-8 rounded-[2rem] bg-card/80 backdrop-blur-xl border border-border/50 shadow-xl transition-transform duration-500 group-hover/card:-translate-y-2">
+        {/* Decorative inner background elements */}
+        <div className="absolute -top-16 -right-16 w-40 h-40 bg-primary/20 blur-[50px] rounded-full pointer-events-none group-hover/card:bg-primary/30 transition-colors duration-500"></div>
+        <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-accent/20 blur-[50px] rounded-full pointer-events-none group-hover/card:bg-accent/30 transition-colors duration-500"></div>
+        
+        <div className="relative z-10 flex flex-col h-full">
+        <div className="flex gap-1 mb-6">
+          {Array.from({ length: testimonial.stars }).map((_, i) => (
+            <Star key={i} className="w-5 h-5 text-accent fill-accent" />
+          ))}
+        </div>
+        <p className="text-foreground leading-relaxed mb-8 italic">
+          &quot;{testimonial.quote}&quot;
+        </p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center text-white font-bold shadow-md shadow-primary/20">
+            {testimonial.initials}
+          </div>
+          <div>
+            <p className="font-heading font-bold text-foreground">
+              {testimonial.name}
+            </p>
+            <p className="text-muted-foreground text-sm">{testimonial.role}</p>
+          </div>
+        </div>
       </div>
-      <p className="text-foreground leading-relaxed mb-6 italic">
-        &quot;{testimonial.quote}&quot;
-      </p>
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold">
-          {testimonial.initials}
-        </div>
-        <div>
-          <p className="font-heading font-bold text-foreground">
-            {testimonial.name}
-          </p>
-          <p className="text-muted-foreground text-sm">{testimonial.role}</p>
-        </div>
       </div>
     </div>
   );
@@ -125,7 +136,7 @@ export default function TestimonialCarousel() {
         >
           {slides.map((group, gi) => (
             <div key={gi} className="w-full shrink-0">
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-8 py-8 px-4">
                 {group.map((t, ti) => (
                   <TestimonialCard key={ti} testimonial={t} />
                 ))}
