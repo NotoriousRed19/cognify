@@ -31,6 +31,10 @@ export default function Header() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/");
@@ -113,6 +117,7 @@ export default function Header() {
             <NavHeader
               wrapperClassName="flex-col gap-4 text-lg"
               className="block w-full py-2 text-muted-foreground font-medium hover:text-primary transition-colors"
+              onLinkClick={() => setIsMobileMenuOpen(false)}
             />
           </nav>
           <div className="flex flex-col gap-3">
@@ -121,11 +126,15 @@ export default function Header() {
                   <Link
                     href={user?.email?.toLowerCase() === 'mauriciocotufa@gmail.com' ? "/dashboard/admin" : "/dashboard"}
                     className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Ir al Dashboard
                   </Link>
                   <button
-                    onClick={handleSignOut}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
                     className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-muted-foreground font-medium bg-muted shadow-sm hover:bg-muted/80 transition-all duration-300 text-lg"
                   >
                     Cerrar Sesión
@@ -136,12 +145,14 @@ export default function Header() {
                   <Link
                     href="/login"
                     className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Iniciar sesión
                   </Link>
                   <Link
                     href="/register"
                     className="w-full text-center whitespace-nowrap px-6 py-3 rounded-xl text-primary-foreground font-medium bg-gradient-primary shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:opacity-95 transition-all duration-300 text-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Comenzar gratis
                   </Link>
