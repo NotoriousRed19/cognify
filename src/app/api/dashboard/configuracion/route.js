@@ -12,7 +12,9 @@ const ConfigSchema = z.object({
   slug: z.string().min(3).max(50).optional().nullable().or(z.literal("")),
   booking_enabled: z.boolean().optional(),
   payment_instructions: z.string().max(1000).optional().nullable().or(z.literal("")),
-  availability: z.array(AvailabilityBlockSchema).optional()
+  availability: z.array(AvailabilityBlockSchema).optional(),
+  reminder_24h: z.boolean().optional(),
+  custom_reminder_message: z.string().max(500).optional().nullable().or(z.literal(""))
 });
 
 export async function GET(request) {
@@ -44,7 +46,14 @@ export async function GET(request) {
     return NextResponse.json({ error: "Error obteniendo disponibilidad" }, { status: 500 });
   }
 
-  return NextResponse.json({ user: userData, availability });
+  // Obtener preferencias de notificación
+  const { data: notifPrefs } = await supabase
+    .from("NotificationPreference")
+    .select("reminder_24h, custom_reminder_message")
+    .eq("doctor_id", userId)
+    .single();
+
+  return NextResponse.json({ user: userData, availability, notifications: notifPrefs });
 }
 
 export async function POST(request) {
@@ -61,7 +70,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.errors }, { status: 400 });
     }
     
-    const { slug, booking_enabled, payment_instructions, availability } = parsed.data;
+    const { slug, booking_enabled, payment_instructions, availability, reminder_24h, custom_reminder_message } = parsed.data;
 
     // 1. Validar unicidad del slug
     if (slug) {
@@ -122,6 +131,22 @@ export async function POST(request) {
       if (rpcError) {
         console.error("[RPC UPDATE AVAILABILITY ERROR]", rpcError);
         return NextResponse.json({ error: "Error guardando disponibilidad" }, { status: 500 });
+      }
+    }
+
+    // 4. Actualizar Preferencias de Notificación
+    if (reminder_24h !== undefined || custom_reminder_message !== undefined) {
+      const { error: notifError } = await supabase
+        .from("NotificationPreference")
+        .upsert({
+          doctor_id: userId,
+          reminder_24h: reminder_24h !== undefined ? reminder_24h : true,
+          custom_reminder_message: custom_reminder_message || null,
+          updatedAt: new Date().toISOString()
+        }, { onConflict: 'doctor_id' });
+
+      if (notifError) {
+        console.error("[NOTIF PREF ERROR]", notifError);
       }
     }
 

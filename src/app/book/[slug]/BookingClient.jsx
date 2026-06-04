@@ -30,6 +30,7 @@ export default function BookingClient({ doctor }) {
     apellido: "",
     identificacion: "",
     celular: "",
+    email: "",
     nacionalidad: "",
     fecha_nacimiento: "",
     sexo: ""
@@ -70,6 +71,35 @@ export default function BookingClient({ doctor }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (step === 2) {
+      setSubmitting(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/booking/${doctor.slug}/validate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identificacion: formData.identificacion,
+            celular: formData.celular
+          })
+        });
+        const data = await res.json();
+        
+        if (data.exists) {
+          setError("Identificación o celular ya registrado");
+          setSubmitting(false);
+          return;
+        } else if (!res.ok) {
+          setError(data.error || "Error validando datos");
+          setSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        setError("Error de conexión al validar");
+        setSubmitting(false);
+        return;
+      }
+      
+      setSubmitting(false);
       setStep(3); // Pasar al pago
       return;
     }
@@ -327,6 +357,18 @@ export default function BookingClient({ doctor }) {
                         value={formData.celular} onChange={e => setFormData({...formData, celular: e.target.value.replace(/[^0-9+]/g, "")})}
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-2.5">
+                      <label className="text-sm font-semibold text-foreground">Correo Electrónico</label>
+                      <input 
+                        required type="email"
+                        placeholder="tucorreo@ejemplo.com"
+                        className="w-full p-4 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                        value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
+                      />
+                    </div>
                     <div className="space-y-2.5">
                       <label className="text-sm font-semibold text-foreground">Nacionalidad</label>
                       <select 
@@ -383,13 +425,22 @@ export default function BookingClient({ doctor }) {
                     </div>
                   </div>
                 </div>
+                <div className="space-y-5">
+                  {error && (
+                    <div className="p-5 bg-destructive/10 text-destructive text-[15px] font-medium rounded-2xl border border-destructive/20 flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5" />
+                      {error}
+                    </div>
+                  )}
 
-                <button
-                  type="submit"
-                  className="w-full py-4.5 bg-brand-gradient text-white rounded-2xl font-bold hover:opacity-90 transition-all duration-300 shadow-soft flex items-center justify-center gap-2 text-lg"
-                >
-                  Proceder al Pago <ArrowRight className="w-5 h-5" />
-                </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-4.5 bg-brand-gradient text-white rounded-2xl font-bold hover:opacity-90 transition-all duration-300 shadow-soft flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:grayscale"
+                  >
+                    {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Proceder al Pago <ArrowRight className="w-5 h-5" /></>}
+                  </button>
+                </div>
               </div>
             )}
 

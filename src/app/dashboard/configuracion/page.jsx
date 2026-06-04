@@ -13,7 +13,9 @@ export default function ConfiguracionPage() {
   const [formData, setFormData] = useState({
     slug: "",
     booking_enabled: true,
-    payment_instructions: ""
+    payment_instructions: "",
+    reminder_24h: true,
+    custom_reminder_message: ""
   });
   const [availability, setAvailability] = useState([]);
   const [error, setError] = useState(null);
@@ -24,12 +26,14 @@ export default function ConfiguracionPage() {
     const fetchConfig = async () => {
       const res = await fetch("/api/dashboard/configuracion");
       if (res.ok) {
-        const { user, availability: avail } = await res.json();
+        const { user, availability: avail, notifications } = await res.json();
         if (user) {
           setFormData({
             slug: user.slug || "",
             booking_enabled: user.booking_enabled ?? true,
-            payment_instructions: user.payment_instructions || ""
+            payment_instructions: user.payment_instructions || "",
+            reminder_24h: notifications?.reminder_24h ?? true,
+            custom_reminder_message: notifications?.custom_reminder_message || ""
           });
         }
         if (avail) {
@@ -203,6 +207,47 @@ export default function ConfiguracionPage() {
               />
             </div>
 
+          </div>
+        </div>
+
+        {/* Sección Notificaciones Automáticas */}
+        <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border/50 bg-muted/10">
+            <h2 className="font-bold text-foreground flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-primary" /> Notificaciones Automáticas
+            </h2>
+          </div>
+          <div className="p-6 space-y-4">
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="font-semibold text-sm text-foreground">Recordatorios 24h antes</label>
+                <p className="text-xs text-muted-foreground">Envía un correo automático a tus pacientes 24 horas antes de su cita.</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={formData.reminder_24h}
+                  onChange={(e) => setFormData({...formData, reminder_24h: e.target.checked})}
+                />
+                <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              </label>
+            </div>
+
+            {formData.reminder_24h && (
+              <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="font-semibold text-sm text-foreground mb-1 block">Mensaje Personalizado en Recordatorio (Opcional)</label>
+                <p className="text-xs text-muted-foreground mb-2">Este mensaje aparecerá resaltado en el correo que reciba el paciente.</p>
+                <textarea 
+                  rows={2}
+                  className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 custom-scrollbar"
+                  placeholder="Ej. Recuerda estar en un lugar tranquilo y con buena conexión a internet."
+                  value={formData.custom_reminder_message}
+                  onChange={(e) => setFormData({...formData, custom_reminder_message: e.target.value})}
+                />
+              </div>
+            )}
           </div>
         </div>
 

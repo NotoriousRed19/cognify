@@ -19,34 +19,39 @@ export async function GET() {
       .from("Appointment")
       .select('*, patient:Patient(nombre)')
       .gte("fecha_inicio", now.toISOString())
+      .neq("estado", "CANCELADA")
+      .neq("estado", "COMPLETADA")
+      .neq("status", "REJECTED")
       .order("fecha_inicio", { ascending: true })
       .limit(5);
 
     // ── 3. Pacientes CON al menos una cita próxima ───────────────────────────
-    // TODO: Migrar a una función SQL con COUNT(DISTINCT patient_id) para mejor rendimiento
     const { data: patientsWithApptData, error: e3 } = await supabase
       .from("Appointment")
       .select('patient_id')
       .gte("fecha_inicio", now.toISOString())
       .not('patient_id', 'is', null)
+      .neq("estado", "CANCELADA")
+      .neq("estado", "COMPLETADA")
+      .neq("status", "REJECTED")
       .limit(10000);
       
-    // Eliminar duplicados manualmente (Supabase JS no tiene DISTINCT nativo simple en select)
     const uniquePatientIds = new Set((patientsWithApptData || []).map(a => a.patient_id));
     const withAppointmentCount = uniquePatientIds.size;
     const withoutAppointmentCount = (totalPatients || 0) - withAppointmentCount;
 
     // ── 4. Actividad semanal (citas por día, semana actual) ──────────────────
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Lunes
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });     // Domingo
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
     const { data: thisWeekAppointments, error: e4 } = await supabase
       .from("Appointment")
       .select("fecha_inicio")
       .gte("fecha_inicio", weekStart.toISOString())
-      .lte("fecha_inicio", weekEnd.toISOString());
+      .lte("fecha_inicio", weekEnd.toISOString())
+      .neq("estado", "CANCELADA")
+      .neq("status", "REJECTED");
 
-    // Agrupar por día (Lun–Dom) — usar Map para O(1) lookups
     const dayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
     const appointmentsByDay = new Map();
     (thisWeekAppointments || []).forEach((a) => {
@@ -59,7 +64,7 @@ export async function GET() {
       return { day, citas: appointmentsByDay.get(dayStr) || 0 };
     });
 
-    // ── 5. Cita de hoy ────────────────────────────────────────────────────────
+    // ── 5. Cita de hoy (Pendientes) ───────────────────────────────────────────
     const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date(now);
@@ -69,7 +74,10 @@ export async function GET() {
       .from("Appointment")
       .select('*', { count: 'exact', head: true })
       .gte("fecha_inicio", todayStart.toISOString())
-      .lte("fecha_inicio", todayEnd.toISOString());
+      .lte("fecha_inicio", todayEnd.toISOString())
+      .neq("estado", "CANCELADA")
+      .neq("estado", "COMPLETADA")
+      .neq("status", "REJECTED");
 
     // ── 6. Sesiones Completadas (Histórico) ──────────────────────────
     const { count: completedSessionsCount, error: e6 } = await supabase

@@ -70,27 +70,81 @@ export async function PATCH(request, { params }) {
         return NextResponse.json({ error: "Error al aprobar la reserva: " + rpcError.message }, { status: 400 });
       }
 
-      // Simular envío de notificación (Email / SMS)
-      console.log(`[NOTIFICACIÓN] Enviando EMAIL y SMS a ${currentAppt.guest_contact}: Tu cita ha sido APROBADA.`);
-      
+      try {
+        const { notificationService } = await import("@/lib/notification-service");
+        const email = currentAppt.guest_details?.email;
+        if (email) {
+          // No-bloqueante: enviar en segundo plano
+          notificationService.notifyPatientBookingStatus({
+            doctorId: user.id,
+            appointmentId: id,
+            patientEmail: email,
+            patientName: currentAppt.guest_name,
+            doctorName: user.name || "Especialista",
+            appointmentDate: currentAppt.fecha_inicio,
+            status: 'APPROVED'
+          }).catch(err => console.error("[NOTIF ERROR] Fallo notificación aprobación:", err));
+        }
+      } catch (notifErr) {
+        console.error("[NOTIF ERROR] No se pudo notificar al paciente de la aprobación:", notifErr);
+      }
+
       // Ya se actualizó en la BD, devolver éxito
       return NextResponse.json({ success: true, message: "Aprobada y paciente creado" }, { status: 200 });
     }
 
     // Si estamos rechazando
     if (data.status === "REJECTED" && currentAppt.status === "PENDING_APPROVAL") {
-      console.log(`[NOTIFICACIÓN] Enviando EMAIL y SMS a ${currentAppt.guest_contact}: Tu cita ha sido RECHAZADA.`);
-      
-      const { error: deleteError } = await supabase
+      // Primero actualizar el estado a REJECTED (soft delete — preservar historial)
+      const { error: rejectError } = await supabase
         .from("Appointment")
-        .delete()
+        .update({ status: "REJECTED" })
         .eq("id", id);
         
-      if (deleteError) {
-        return NextResponse.json({ error: "Error al borrar la cita rechazada" }, { status: 403 });
+      if (rejectError) {
+        return NextResponse.json({ error: "Error al rechazar la cita" }, { status: 403 });
+      }
+
+      // Notificar al paciente del rechazo (no bloqueante)
+      try {
+        const { notificationService } = await import("@/lib/notification-service");
+        const email = currentAppt.guest_details?.email;
+        if (email) {
+          notificationService.notifyPatientBookingStatus({
+            doctorId: user.id,
+            appointmentId: id,
+            patientEmail: email,
+            patientName: currentAppt.guest_name,
+            doctorName: user.name || "Especialista",
+            appointmentDate: currentAppt.fecha_inicio,
+            status: 'REJECTED'
+          }).catch(err => console.error("[NOTIF ERROR] Fallo notificación rechazo:", err));
+        }
+      } catch (notifErr) {
+        console.error("[NOTIF ERROR] No se pudo notificar al paciente del rechazo:", notifErr);
       }
       
-      return NextResponse.json({ success: true, message: "Cita rechazada y eliminada" }, { status: 200 });
+      return NextResponse.json({ success: true, message: "Cita rechazada" }, { status: 200 });
+    }
+
+    // Bloquear cambios directos de status fuera de los flujos de aprobación/rechazo
+    // Esto previene que alguien envíe { status: "CONFIRMED" } para saltarse el RPC
+    if (data.status) {
+      return NextResponse.json({ error: "No puedes cambiar el estado directamente. Usa los flujos de aprobación/rechazo." }, { status: 400 });
+    }
+
+    // Validar transiciones de estado de la cita
+    if (data.estado) {
+      const allowedTransitions = {
+        'AGENDADA': ['COMPLETADA', 'CANCELADA'],
+        'COMPLETADA': [],
+        'CANCELADA': []
+      };
+
+      const currentEstado = currentAppt.estado || 'AGENDADA';
+      if (!allowedTransitions[currentEstado] || !allowedTransitions[currentEstado].includes(data.estado)) {
+        return NextResponse.json({ error: `Transición de estado inválida de ${currentEstado} a ${data.estado}` }, { status: 400 });
+      }
     }
 
     const { data: updated, error } = await supabase
@@ -122,18 +176,25 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const { error } = await supabase
+    // Soft delete: cambiar estado a CANCELADA en lugar de borrar físicamente
+    const { data, error } = await supabase
       .from("Appointment")
-      .delete()
-      .eq("id", id);
+      .update({ estado: "CANCELADA", status: "REJECTED" }) // Update both status and estado just in case
+      .eq("id", id)
+      .select();
 
     if (error) {
-      return NextResponse.json({ error: "Cita no encontrada o acceso denegado" }, { status: 404 });
+      console.error("[APPOINTMENT_DELETE_DB_ERROR]", error);
+      return NextResponse.json({ error: "Error de DB al cancelar", details: error }, { status: 403 });
     }
 
-    return NextResponse.json({ message: "Cita eliminada exitosamente" }, { status: 200 });
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: "Cita no encontrada o acceso denegado por políticas de seguridad" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Cita cancelada exitosamente", appointment: data[0] }, { status: 200 });
   } catch (error) {
     console.error("[APPOINTMENT_DELETE]", error);
-    return NextResponse.json({ error: "Error al eliminar la cita" }, { status: 500 });
+    return NextResponse.json({ error: "Error al cancelar la cita" }, { status: 500 });
   }
 }

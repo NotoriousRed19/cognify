@@ -33,6 +33,8 @@ export async function GET(request) {
         *,
         patient:Patient ( nombre )
       `)
+      .neq("estado", "CANCELADA")
+      .neq("status", "REJECTED")
       .order("fecha_inicio", { ascending: true });
 
     if (startDate) {
@@ -86,6 +88,35 @@ export async function POST(request) {
 
       if (!patient) {
         return NextResponse.json({ error: "Paciente inválido o no autorizado" }, { status: 403 });
+      }
+    }
+
+    // Verificar colisiones de horario (Overlap) para evitar citas dobles
+    const { data: overlapping, error: overlapError } = await supabase
+      .from("Appointment")
+      .select("id, status, estado, expires_at")
+      .eq("doctor_id", user.id)
+      .neq("estado", "CANCELADA")
+      .neq("status", "REJECTED")
+      .lt("fecha_inicio", fecha_fin)
+      .gt("fecha_fin", fecha_inicio);
+
+    if (overlapError) {
+      return NextResponse.json({ error: "Error validando disponibilidad del horario" }, { status: 500 });
+    }
+
+    if (overlapping && overlapping.length > 0) {
+      const hasConflict = overlapping.some(appt => {
+        const s = appt.status || appt.estado;
+        if (s === 'CONFIRMED' || s === 'AGENDADA' || s === 'COMPLETADA') return true;
+        if (s === 'PENDING_APPROVAL') {
+          return !appt.expires_at || new Date(appt.expires_at) > new Date();
+        }
+        return false;
+      });
+
+      if (hasConflict) {
+        return NextResponse.json({ error: "Ya tienes una cita o reserva ocupando este bloque de tiempo" }, { status: 409 });
       }
     }
 

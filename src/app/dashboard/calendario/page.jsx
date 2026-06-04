@@ -198,12 +198,14 @@ export default function CalendarPage() {
   };
 
   const handleDayClick = (cloneDay) => {
+    setSubmitError(null);
     setSelectedDateForAgenda(cloneDay);
     setModalMode("agenda");
     setIsModalOpen(true);
   };
 
   const handleAppointmentClick = (appt) => {
+    setSubmitError(null);
     setSelectedApptId(appt.id);
     if (appt.status === "PENDING_APPROVAL") {
       setModalMode("review");
@@ -238,10 +240,12 @@ export default function CalendarPage() {
         setModalMode("agenda");
         fetchAppointments();
       } else {
-        alert("Fallo al eliminar cita");
+        const errorData = await res.json().catch(() => ({}));
+        alert("Fallo al eliminar cita: " + (errorData.error || "Error desconocido"));
       }
     } catch (error) {
       console.error(error);
+      alert("Error de red al intentar eliminar la cita");
     }
   };
 
