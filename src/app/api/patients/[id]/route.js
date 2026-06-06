@@ -55,7 +55,7 @@ export async function PATCH(request, { params }) {
     }
     const body = await request.json();
 
-    const allowedFields = ["nombre", "identificacion", "celular", "fecha_nacimiento", "sexo", "nacionalidad", "historial_medico", "medicacion"];
+    const allowedFields = ["nombre", "identificacion", "celular", "email", "fecha_nacimiento", "sexo", "nacionalidad", "historial_medico", "medicacion"];
     const data = {};
     for (const field of allowedFields) {
       if (field in body) {
@@ -66,6 +66,21 @@ export async function PATCH(request, { params }) {
         } else {
           data[field] = body[field] || null;
         }
+      }
+    }
+
+    if (data.email) {
+      const { data: existingPatient } = await supabase
+        .from('Patient')
+        .select('id')
+        .eq('doctor_id', user.id)
+        .eq('email', data.email)
+        .neq('id', id)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingPatient) {
+        return NextResponse.json({ error: "El correo electrónico ya está registrado para otro paciente." }, { status: 409 });
       }
     }
 

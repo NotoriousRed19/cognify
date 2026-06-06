@@ -60,12 +60,13 @@ const baseHtml = (content) => `
 </html>
 `;
 
-export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientContact, patientEmail, appointmentDate, dashboardUrl }) => {
+export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientContact, patientEmail, appointmentDate, dashboardUrl, selectedService }) => {
   // Escapar TODA entrada del usuario para prevenir XSS/inyección HTML
   const safeDoctorName = escapeHtml(doctorName);
   const safePatientName = escapeHtml(patientName);
   const safePatientContact = escapeHtml(patientContact);
   const safePatientEmail = escapeHtml(patientEmail);
+  const safeSelectedService = selectedService ? escapeHtml(selectedService) : null;
 
   return baseHtml(`
     <h2 style="color: #1a1a2e; font-size: 22px; font-weight: 700; margin: 0 0 12px;">Nueva Solicitud de Cita</h2>
@@ -75,6 +76,7 @@ export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientCo
     
     <div style="background: #f8f7fc; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
       <p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Paciente:</strong> ${safePatientName}</p>
+      ${safeSelectedService ? `<p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Servicio:</strong> <span style="background: #e9e4f5; color: #7b61ae; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 13px;">${safeSelectedService}</span></p>` : ''}
       <p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Fecha y Hora:</strong> ${formatDate(appointmentDate)}</p>
       <p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Teléfono:</strong> ${safePatientContact}</p>
       <p style="margin: 0; font-size: 14px; color: #1a1a2e;"><strong>Correo:</strong> ${safePatientEmail || 'No proporcionado'}</p>

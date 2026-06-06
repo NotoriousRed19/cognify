@@ -14,6 +14,12 @@ export default function ConfiguracionPage() {
     slug: "",
     booking_enabled: true,
     payment_instructions: "",
+    pricing_info: {
+      service1: "",
+      service2: "",
+      service3: "",
+      exchangeRate: ""
+    },
     reminder_24h: true,
     custom_reminder_message: ""
   });
@@ -32,6 +38,12 @@ export default function ConfiguracionPage() {
             slug: user.slug || "",
             booking_enabled: user.booking_enabled ?? true,
             payment_instructions: user.payment_instructions || "",
+            pricing_info: {
+              service1: user.pricing_info?.service1 || "",
+              service2: user.pricing_info?.service2 || "",
+              service3: user.pricing_info?.service3 || "",
+              exchangeRate: user.pricing_info?.exchangeRate || ""
+            },
             reminder_24h: notifications?.reminder_24h ?? true,
             custom_reminder_message: notifications?.custom_reminder_message || ""
           });
@@ -207,6 +219,75 @@ export default function ConfiguracionPage() {
               />
             </div>
 
+          </div>
+        </div>
+
+        {/* Sección Servicios y Precios */}
+        <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border/50 bg-muted/10">
+            <h2 className="font-bold text-foreground flex items-center gap-2">
+              <span className="text-primary font-bold">$$</span> Servicios y Precios
+            </h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Estos servicios se mostrarán al paciente al momento de agendar su cita para que seleccione uno obligatoriamente.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold text-sm text-foreground mb-1 block">Servicio 1</label>
+                <input 
+                  type="text"
+                  placeholder="Ej. Terapia regular: 25$"
+                  className="w-full p-2 bg-background border border-border/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  value={formData.pricing_info.service1}
+                  onChange={(e) => setFormData({
+                    ...formData, 
+                    pricing_info: { ...formData.pricing_info, service1: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-sm text-foreground mb-1 block">Servicio 2</label>
+                <input 
+                  type="text"
+                  placeholder="Ej. Terapia de parejas: 45$"
+                  className="w-full p-2 bg-background border border-border/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  value={formData.pricing_info.service2}
+                  onChange={(e) => setFormData({
+                    ...formData, 
+                    pricing_info: { ...formData.pricing_info, service2: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-sm text-foreground mb-1 block">Servicio 3</label>
+                <input 
+                  type="text"
+                  placeholder="Ej. Terapia de 1 hora: 15$"
+                  className="w-full p-2 bg-background border border-border/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  value={formData.pricing_info.service3}
+                  onChange={(e) => setFormData({
+                    ...formData, 
+                    pricing_info: { ...formData.pricing_info, service3: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <label className="font-semibold text-sm text-foreground mb-1 block">Tasa de Cambio</label>
+                <input 
+                  type="text"
+                  placeholder="Ej. $ = 650 bs"
+                  className="w-full p-2 bg-background border border-border/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  value={formData.pricing_info.exchangeRate}
+                  onChange={(e) => setFormData({
+                    ...formData, 
+                    pricing_info: { ...formData.pricing_info, exchangeRate: e.target.value }
+                  })}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

@@ -22,8 +22,10 @@ export default function BookingClient({ doctor }) {
   const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slots, setSlots] = useState([]);
+  const [pricingInfo, setPricingInfo] = useState({});
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
+  const [selectedService, setSelectedService] = useState("");
   
   const [formData, setFormData] = useState({
     nombre: "",
@@ -55,8 +57,10 @@ export default function BookingClient({ doctor }) {
         if (res.ok) {
           const data = await res.json();
           setSlots(data.slots || []);
+          setPricingInfo(data.pricing_info || {});
         } else {
           setSlots([]);
+          setPricingInfo({});
         }
       } catch (err) {
         console.error(err);
@@ -100,11 +104,20 @@ export default function BookingClient({ doctor }) {
       }
       
       setSubmitting(false);
-      setStep(3); // Pasar al pago
+      setStep(3); // Pasar a servicios
       return;
     }
 
     if (step === 3) {
+      if (!selectedService) {
+        setError("Debes seleccionar un servicio");
+        return;
+      }
+      setStep(4); // Pasar al pago
+      return;
+    }
+
+    if (step === 4) {
       setSubmitting(true);
       setError(null);
       try {
@@ -114,6 +127,7 @@ export default function BookingClient({ doctor }) {
           body: JSON.stringify({
             date: format(selectedDate, "yyyy-MM-dd"),
             time: selectedTime,
+            service: selectedService,
             ...formData
           })
         });
@@ -123,7 +137,7 @@ export default function BookingClient({ doctor }) {
           setError(data.error || "Ocurrió un error");
           setSubmitting(false);
         } else {
-          setStep(4); // Success
+          setStep(5); // Success
         }
       } catch (err) {
         setError("Error de conexión");
@@ -136,7 +150,7 @@ export default function BookingClient({ doctor }) {
     if (step > 1) setStep(step - 1);
   };
 
-  if (step === 4) {
+  if (step === 5) {
     return (
       <div className="flex flex-col min-h-screen">
         <header className="w-full bg-background/80 backdrop-blur-md border-b border-border/50 py-4 px-6 sticky top-0 z-50">
@@ -201,10 +215,10 @@ export default function BookingClient({ doctor }) {
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-muted rounded-full -z-10"></div>
           <div 
             className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-brand-gradient rounded-full -z-10 transition-all duration-700 ease-in-out"
-            style={{ width: `${((step - 1) / 2) * 100}%` }}
+            style={{ width: `${((step - 1) / 3) * 100}%` }}
           ></div>
           
-          {[1, 2, 3].map(s => {
+          {[1, 2, 3, 4].map(s => {
             const isActive = step === s;
             const isCompleted = step > s;
             
@@ -219,7 +233,8 @@ export default function BookingClient({ doctor }) {
               >
                 {s === 1 && <Calendar className="w-5 h-5" />}
                 {s === 2 && <User className="w-5 h-5" />}
-                {s === 3 && <CreditCard className="w-5 h-5" />}
+                {s === 3 && <Brain className="w-5 h-5" />}
+                {s === 4 && <CreditCard className="w-5 h-5" />}
               </div>
             );
           })}
@@ -438,14 +453,81 @@ export default function BookingClient({ doctor }) {
                     disabled={submitting}
                     className="w-full py-4.5 bg-brand-gradient text-white rounded-2xl font-bold hover:opacity-90 transition-all duration-300 shadow-soft flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:grayscale"
                   >
-                    {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Proceder al Pago <ArrowRight className="w-5 h-5" /></>}
+                    {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Continuar a Servicios <ArrowRight className="w-5 h-5" /></>}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 3: PAGO */}
+            {/* STEP 3: SERVICIOS Y PRECIOS */}
             {step === 3 && (
+              <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
+                <div className="flex items-start gap-4">
+                  <button type="button" onClick={handleBack} className="p-2.5 mt-1 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl font-heading font-bold text-foreground tracking-tight mb-2">Servicios y Precios</h2>
+                    <p className="text-muted-foreground text-lg">Selecciona el servicio que deseas agendar.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {[pricingInfo?.service1, pricingInfo?.service2, pricingInfo?.service3]
+                    .filter(s => s && s.trim() !== '')
+                    .map((service, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedService(service)}
+                        className={`w-full text-left p-6 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between ${
+                          selectedService === service 
+                            ? 'border-primary bg-primary/5 shadow-soft ring-4 ring-primary/10' 
+                            : 'border-border/60 bg-card hover:border-primary/40 hover:bg-muted/30'
+                        }`}
+                      >
+                        <span className="text-lg font-medium text-foreground">{service}</span>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          selectedService === service ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                        }`}>
+                          {selectedService === service && <div className="w-2.5 h-2.5 bg-white rounded-full"></div>}
+                        </div>
+                      </button>
+                    ))}
+                  
+                  {(!pricingInfo?.service1 && !pricingInfo?.service2 && !pricingInfo?.service3) && (
+                    <div className="p-6 text-center text-muted-foreground border border-dashed rounded-2xl">
+                      No hay servicios especificados. Puedes continuar.
+                    </div>
+                  )}
+
+                  {pricingInfo?.exchangeRate && (
+                    <div className="mt-6 p-4 bg-muted/40 rounded-xl border border-border/50 text-center text-sm text-muted-foreground font-mono">
+                      Tasa de cambio: {pricingInfo.exchangeRate}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-5">
+                  {error && (
+                    <div className="p-5 bg-destructive/10 text-destructive text-[15px] font-medium rounded-2xl border border-destructive/20 flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5" />
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-4.5 bg-brand-gradient text-white rounded-2xl font-bold hover:opacity-90 transition-all duration-300 shadow-soft flex items-center justify-center gap-2 text-lg"
+                  >
+                    Proceder al Pago <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: PAGO */}
+            {step === 4 && (
               <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
                 <div className="flex items-start gap-4">
                   <button type="button" onClick={handleBack} className="p-2.5 mt-1 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">

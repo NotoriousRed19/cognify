@@ -74,8 +74,7 @@ export async function PATCH(request, { params }) {
         const { notificationService } = await import("@/lib/notification-service");
         const email = currentAppt.guest_details?.email;
         if (email) {
-          // No-bloqueante: enviar en segundo plano
-          notificationService.notifyPatientBookingStatus({
+          await notificationService.notifyPatientBookingStatus({
             doctorId: user.id,
             appointmentId: id,
             patientEmail: email,
@@ -83,7 +82,7 @@ export async function PATCH(request, { params }) {
             doctorName: user.name || "Especialista",
             appointmentDate: currentAppt.fecha_inicio,
             status: 'APPROVED'
-          }).catch(err => console.error("[NOTIF ERROR] Fallo notificación aprobación:", err));
+          });
         }
       } catch (notifErr) {
         console.error("[NOTIF ERROR] No se pudo notificar al paciente de la aprobación:", notifErr);
@@ -110,7 +109,7 @@ export async function PATCH(request, { params }) {
         const { notificationService } = await import("@/lib/notification-service");
         const email = currentAppt.guest_details?.email;
         if (email) {
-          notificationService.notifyPatientBookingStatus({
+          await notificationService.notifyPatientBookingStatus({
             doctorId: user.id,
             appointmentId: id,
             patientEmail: email,
@@ -118,7 +117,7 @@ export async function PATCH(request, { params }) {
             doctorName: user.name || "Especialista",
             appointmentDate: currentAppt.fecha_inicio,
             status: 'REJECTED'
-          }).catch(err => console.error("[NOTIF ERROR] Fallo notificación rechazo:", err));
+          });
         }
       } catch (notifErr) {
         console.error("[NOTIF ERROR] No se pudo notificar al paciente del rechazo:", notifErr);

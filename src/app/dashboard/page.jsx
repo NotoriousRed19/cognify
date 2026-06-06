@@ -108,6 +108,25 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Alerta de citas pendientes */}
+      {stats?.pendingApprovalCount > 0 && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 backdrop-blur-md rounded-2xl flex items-start gap-3 text-amber-700 animate-fade-in relative">
+          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="text-sm font-bold block">¡Tienes nuevas reservas pendientes!</span>
+            <p className="text-xs text-amber-700/90 mt-0.5 leading-relaxed">
+              Tienes {stats.pendingApprovalCount} {stats.pendingApprovalCount === 1 ? 'reserva' : 'reservas'} esperando por tu aprobación. Ingresa al calendario para gestionarlas.
+            </p>
+          </div>
+          <Link 
+            href="/dashboard/calendario"
+            className="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-sm"
+          >
+            Ver Calendario
+          </Link>
+        </div>
+      )}
+
       {/* Encabezado */}
       <div className="flex items-end justify-between">
         <div>

@@ -12,6 +12,12 @@ const ConfigSchema = z.object({
   slug: z.string().min(3).max(50).optional().nullable().or(z.literal("")),
   booking_enabled: z.boolean().optional(),
   payment_instructions: z.string().max(1000).optional().nullable().or(z.literal("")),
+  pricing_info: z.object({
+    service1: z.string().max(100).optional(),
+    service2: z.string().max(100).optional(),
+    service3: z.string().max(100).optional(),
+    exchangeRate: z.string().max(100).optional()
+  }).optional().nullable(),
   availability: z.array(AvailabilityBlockSchema).optional(),
   reminder_24h: z.boolean().optional(),
   custom_reminder_message: z.string().max(500).optional().nullable().or(z.literal(""))
@@ -26,7 +32,7 @@ export async function GET(request) {
   // Obtener perfil del usuario
   const { data: userData, error: userError } = await supabase
     .from("User")
-    .select("slug, booking_enabled, payment_instructions")
+    .select("slug, booking_enabled, payment_instructions, pricing_info")
     .eq("id", userId)
     .single();
 
@@ -70,7 +76,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.errors }, { status: 400 });
     }
     
-    const { slug, booking_enabled, payment_instructions, availability, reminder_24h, custom_reminder_message } = parsed.data;
+    const { slug, booking_enabled, payment_instructions, pricing_info, availability, reminder_24h, custom_reminder_message } = parsed.data;
 
     // 1. Validar unicidad del slug
     if (slug) {
@@ -101,7 +107,8 @@ export async function POST(request) {
       .update({ 
         slug: slug || null, 
         booking_enabled: booking_enabled !== undefined ? booking_enabled : true, 
-        payment_instructions: payment_instructions || null 
+        payment_instructions: payment_instructions || null,
+        pricing_info: pricing_info || {}
       })
       .eq("id", userId);
 

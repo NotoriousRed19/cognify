@@ -7,6 +7,7 @@ import { fromZonedTime } from "date-fns-tz";
 const RequestSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido"),
+  service: z.string().min(1, "El servicio es requerido").max(200),
   nombre: z.string().min(1, "El nombre es requerido").max(100),
   apellido: z.string().min(1, "El apellido es requerido").max(100),
   identificacion: z.string().min(1, "La identificación es requerida").max(50),
@@ -29,10 +30,11 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.errors }, { status: 400 });
     }
     
-    const { date, time, nombre, apellido, identificacion, celular, nacionalidad, sexo, fecha_nacimiento, email } = parsed.data;
+    const { date, time, service, nombre, apellido, identificacion, celular, nacionalidad, sexo, fecha_nacimiento, email } = parsed.data;
 
     const guest_name = `${nombre} ${apellido}`;
     const guest_details = {
+      service,
       nombre,
       apellido,
       identificacion,
@@ -62,24 +64,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Fecha/Hora resultaron en un tiempo inválido" }, { status: 400 });
     }
 
-    // ── Novedad: Validar que el paciente no exista (idéntico al dashboard) ──
-    const safeIdentificacion = identificacion.replace(/"/g, '');
-    const safeCelular = celular.replace(/"/g, '');
-    
-    const { data: existingPatient } = await supabase
-      .from('Patient')
-      .select('id')
-      .eq('doctor_id', doctorData.id)
-      .or(`identificacion.eq."${safeIdentificacion}",celular.eq."${safeCelular}"`)
-      .limit(1)
-      .maybeSingle();
-
-    if (existingPatient) {
-      return NextResponse.json({ 
-        error: "Identificación o celular ya registrado" 
-      }, { status: 409 });
-    }
-    // ─────────────────────────────────────────────────────────────────────────
+    // El paciente recurrente puede agendar, la validación de duplicados la maneja rpc_approve_appointment
 
     // Calcular el UTC exacto del fin (+1 hora)
     const slotEndUtc = new Date(slotStartUtc.getTime() + (60 * 60 * 1000));
@@ -115,7 +100,7 @@ export async function POST(request, { params }) {
     try {
       if (doctorData && doctorData.email) {
         const { notificationService } = await import("@/lib/notification-service");
-        notificationService.notifyDoctorNewBooking({
+        await notificationService.notifyDoctorNewBooking({
           doctorId: doctorData.id,
           doctorEmail: doctorData.email,
           doctorName: doctorData.name,
@@ -123,8 +108,9 @@ export async function POST(request, { params }) {
           patientContact: celular,
           patientEmail: email,
           appointmentDate: slotStartUtc.toISOString(),
-          appointmentId: result.appointment_id
-        }).catch(err => console.error("[NOTIF ERROR] No se pudo enviar el correo al doctor:", err));
+          appointmentId: result.appointment_id,
+          selectedService: service
+        });
       }
     } catch (notifErr) {
       console.error("[NOTIF ERROR] Error importando notification-service:", notifErr);

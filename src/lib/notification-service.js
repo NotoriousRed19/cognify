@@ -46,7 +46,7 @@ class NotificationService {
   /**
    * Notifica al psicólogo cuando recibe una nueva reserva
    */
-  async notifyDoctorNewBooking({ doctorId, doctorEmail, doctorName, patientName, patientContact, patientEmail, appointmentDate, appointmentId }) {
+  async notifyDoctorNewBooking({ doctorId, doctorEmail, doctorName, patientName, patientContact, patientEmail, appointmentDate, appointmentId, selectedService }) {
     if (!doctorEmail) return;
 
     const htmlContent = newBookingForDoctorTemplate({
@@ -55,6 +55,7 @@ class NotificationService {
       patientContact,
       patientEmail,
       appointmentDate,
+      selectedService,
       dashboardUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`
     });
 

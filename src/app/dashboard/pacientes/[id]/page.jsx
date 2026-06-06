@@ -6,7 +6,7 @@ import {
   ArrowLeft, Loader2, CalendarPlus, Phone, StickyNote,
   Target, Plus, X, FileText, Pill, HeartPulse,
   CalendarCheck2, CalendarX2, CalendarClock, ClipboardList,
-  ChevronDown, ChevronUp, AlertCircle, Edit2, Check, Cake, User, Globe, Trash2
+  ChevronDown, ChevronUp, AlertCircle, Edit2, Check, Cake, User, Globe, Trash2, Mail
 } from "lucide-react";
 import Link from "next/link";
 import { format, isSameDay, isPast, isFuture, differenceInYears } from "date-fns";
@@ -245,6 +245,11 @@ export default function PatientProfilePage() {
   const [editableHistorial, setEditableHistorial] = useState("");
   const [isSavingHistorial, setIsSavingHistorial] = useState(false);
 
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [editableEmail, setEditableEmail] = useState("");
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [emailError, setEmailError] = useState("");
+
   const [sessionForm, setSessionForm] = useState({
     notas: "",
     tareas_pendientes: "",
@@ -380,6 +385,38 @@ export default function PatientProfilePage() {
   const handleEditHistorialStart = () => {
     setEditableHistorial(patient.historial_medico || "");
     setIsEditingHistorial(true);
+  };
+
+  const handleSaveEmail = async () => {
+    setIsSavingEmail(true);
+    setEmailError("");
+    try {
+      const res = await fetch(`/api/patients/${patient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: editableEmail.trim() || null }),
+      });
+      if (res.ok) {
+        await fetchPatientDetail();
+        setIsEditingEmail(false);
+      } else if (res.status === 409) {
+        const errorData = await res.json();
+        setEmailError(errorData.error || "El correo electrónico ya está registrado.");
+      } else {
+        setEmailError("Ocurrió un error inesperado al guardar el correo.");
+      }
+    } catch (error) {
+      console.error("Error saving email", error);
+      setEmailError("Ocurrió un error inesperado al guardar el correo.");
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
+  const handleEditEmailStart = () => {
+    setEditableEmail(patient.email || "");
+    setEmailError("");
+    setIsEditingEmail(true);
   };
 
   const handleDeleteSession = async (sessionId) => {
@@ -541,6 +578,51 @@ export default function PatientProfilePage() {
                 </span>
               )}
             </div>
+
+            {/* Email Field */}
+            <div className="mt-3 flex items-center">
+              {isEditingEmail ? (
+                <div className="flex items-center gap-2 animate-in fade-in">
+                  <input
+                    type="email"
+                    autoFocus
+                    value={editableEmail}
+                    onChange={(e) => setEditableEmail(e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                    className="px-3 py-1.5 text-sm bg-muted/30 border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 w-64"
+                  />
+                  <button
+                    onClick={handleSaveEmail}
+                    disabled={isSavingEmail}
+                    className="p-1.5 text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {isSavingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={() => setIsEditingEmail(false)}
+                    disabled={isSavingEmail}
+                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group">
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border/50">
+                    <Mail className="w-3.5 h-3.5 text-indigo-500" />
+                    {patient.email || <span className="italic opacity-70">Añadir correo electrónico</span>}
+                  </span>
+                  <button
+                    onClick={handleEditEmailStart}
+                    className="p-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-primary rounded"
+                    title="Editar correo electrónico"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+            {emailError && <p className="text-xs text-rose-500 font-medium mt-1">{emailError}</p>}
 
             {/* ── Stats de citas ─────────────────────────────────────── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">

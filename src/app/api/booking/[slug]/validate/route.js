@@ -28,21 +28,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Doctor no encontrado" }, { status: 404 });
     }
 
-    const safeIdentificacion = identificacion ? identificacion.replace(/"/g, '') : '';
-    const safeCelular = celular ? celular.replace(/"/g, '') : '';
-
-    const { data: existingPatient } = await supabaseAdmin
-      .from('Patient')
-      .select('id')
-      .eq('doctor_id', doctorData.id)
-      .or(`identificacion.eq."${safeIdentificacion}",celular.eq."${safeCelular}"`)
-      .limit(1)
-      .maybeSingle();
-
-    if (existingPatient) {
-      return NextResponse.json({ exists: true });
-    }
-
+    // Retornamos exists: false porque los pacientes recurrentes son bienvenidos.
+    // La unicidad estricta y consolidación de expedientes se realiza en el dashboard mediante el RPC.
     return NextResponse.json({ exists: false });
   } catch (err) {
     console.error("[VALIDATE ERROR]", err);

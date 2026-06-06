@@ -664,8 +664,11 @@ export default function CalendarPage() {
                   
                   <div className="space-y-3">
                     <h4 className="font-semibold text-slate-900 border-b pb-2">Datos del Paciente</h4>
-                    <ul className="text-sm space-y-2 text-slate-700">
+                    <ul className="text-sm space-y-1.5 text-muted-foreground">
                       <li><strong>Nombre:</strong> {formData.guest_details?.nombre} {formData.guest_details?.apellido}</li>
+                      {formData.guest_details?.service && (
+                        <li><strong>Servicio:</strong> <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-semibold">{formData.guest_details.service}</span></li>
+                      )}
                       <li><strong>Cédula / Identidad:</strong> {formData.guest_details?.identificacion}</li>
                       <li><strong>Teléfono / WhatsApp:</strong> {formData.guest_details?.celular}</li>
                       <li><strong>Nacionalidad:</strong> {formData.guest_details?.nacionalidad}</li>

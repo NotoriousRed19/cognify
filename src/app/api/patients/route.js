@@ -33,6 +33,7 @@ export async function POST(request) {
       nombre,
       identificacion,
       celular,
+      email,
       fecha_nacimiento,
       sexo,
       nacionalidad,
@@ -48,16 +49,25 @@ export async function POST(request) {
       );
     }
 
-    if (identificacion || celular) {
+    if (identificacion || celular || email) {
       const orConditions = [];
-      if (identificacion) orConditions.push(`identificacion.eq.${identificacion}`);
-      // Only check for duplicate celular if there's actually a number (avoid checking if it's just '+')
-      if (celular && celular.length > 1) orConditions.push(`celular.eq.${celular}`);
+      if (identificacion) {
+        const safeId = identificacion.replace(/"/g, '');
+        orConditions.push(`identificacion.eq."${safeId}"`);
+      }
+      if (celular && celular.length > 1) {
+        const safeCelular = celular.replace(/"/g, '');
+        orConditions.push(`celular.eq."${safeCelular}"`);
+      }
+      if (email) {
+        const safeEmail = email.replace(/"/g, '');
+        orConditions.push(`email.eq."${safeEmail}"`);
+      }
       
       if (orConditions.length > 0) {
         const { data: existingPatients, error: searchError } = await supabase
           .from("Patient")
-          .select("identificacion, celular")
+          .select("identificacion, celular, email")
           .eq("doctor_id", user.id)
           .or(orConditions.join(","));
 
@@ -65,11 +75,14 @@ export async function POST(request) {
 
         if (existingPatients && existingPatients.length > 0) {
           const duplicate = existingPatients[0];
+          if (email && duplicate.email === email) {
+            return NextResponse.json({ error: "El correo electrónico ya está registrado para otro paciente." }, { status: 409 });
+          }
           if (identificacion && duplicate.identificacion === identificacion) {
-            return NextResponse.json({ error: "Ya existe un paciente registrado con este número de identificación." }, { status: 400 });
+            return NextResponse.json({ error: "Ya existe un paciente registrado con este número de identificación." }, { status: 409 });
           }
           if (celular && duplicate.celular === celular) {
-            return NextResponse.json({ error: "Ya existe un paciente registrado con este número de celular." }, { status: 400 });
+            return NextResponse.json({ error: "Ya existe un paciente registrado con este número de celular." }, { status: 409 });
           }
         }
       }
@@ -89,6 +102,7 @@ export async function POST(request) {
         nombre,
         identificacion: identificacion || null,
         celular: celular || null,
+        email: email || null,
         fecha_nacimiento: fechaNac,
         sexo: sexo || null,
         nacionalidad: nacionalidad || null,

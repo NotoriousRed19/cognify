@@ -36,6 +36,15 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Las reservas están deshabilitadas para este doctor" }, { status: 403 });
     }
 
+    // Obtener pricing_info
+    const { data: userData } = await supabase
+      .from('User')
+      .select('pricing_info')
+      .eq('id', doctorInfo.doctor_id)
+      .single();
+
+    const pricingInfo = userData?.pricing_info || {};
+
     // Determinar día de la semana (0 = Domingo, 6 = Sábado) basado en el dateQuery
     const targetDate = new Date(`${dateQuery}T12:00:00`);
     const dayOfWeek = targetDate.getDay();
@@ -43,7 +52,7 @@ export async function GET(request, { params }) {
     const availabilityBlocks = doctorInfo.availability.filter(b => b.day_of_week === dayOfWeek);
 
     if (!availabilityBlocks || availabilityBlocks.length === 0) {
-      return NextResponse.json({ slots: [] }); // No trabaja ese día
+      return NextResponse.json({ slots: [], pricing_info: pricingInfo }); // No trabaja ese día
     }
 
     // Generar todos los slots crudos posibles (cada 60 min por defecto)
@@ -101,7 +110,7 @@ export async function GET(request, { params }) {
       return true;
     });
 
-    return NextResponse.json({ slots: availableSlots });
+    return NextResponse.json({ slots: availableSlots, pricing_info: pricingInfo });
     
   } catch (err) {
     console.error("[SLOTS API ERROR]", err);

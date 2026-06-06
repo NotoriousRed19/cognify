@@ -85,6 +85,12 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .eq("estado", "COMPLETADA");
 
+    // ── 7. Citas Pendientes de Aprobación ──────────────────────────
+    const { count: pendingApprovalCount, error: e7 } = await supabase
+      .from("Appointment")
+      .select('*', { count: 'exact', head: true })
+      .eq("status", "PENDING_APPROVAL");
+
     return NextResponse.json({
       totalPatients: totalPatients || 0,
       withAppointmentCount,
@@ -93,6 +99,7 @@ export async function GET() {
       upcomingAppointments: upcomingAppointments || [],
       weeklyData,
       completedSessionsCount: completedSessionsCount || 0,
+      pendingApprovalCount: pendingApprovalCount || 0,
     });
   } catch (error) {
     console.error("[DASHBOARD_STATS]", error);
