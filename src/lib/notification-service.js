@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 import { createClient } from '@supabase/supabase-js';
 import { 
   newBookingForDoctorTemplate, 
@@ -7,9 +7,12 @@ import {
   appointmentReminderTemplate 
 } from './email-templates';
 
-// Instanciar Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
-const fromEmail = process.env.RESEND_FROM_EMAIL || 'notificaciones@cognify.app';
+// Instanciar MailerSend
+const mailersend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY || 'dummy_key_for_build',
+});
+const fromEmail = process.env.MAILERSEND_FROM_EMAIL || 'notificaciones@cognify.app';
+const senderObj = new Sender(fromEmail, "Cognify");
 
 // Supabase con Service Role para saltar RLS cuando sea necesario registrar logs internamente
 const supabaseAdmin = createClient(
@@ -63,21 +66,16 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const { data, error } = await resend.emails.send({
-        from: `Cognify <${fromEmail}>`,
-        to: [doctorEmail],
-        subject: `🟢 Nueva reserva: ${patientName}`,
-        html: htmlContent,
-      });
+      const emailParams = new EmailParams()
+        .setFrom(senderObj)
+        .setTo([new Recipient(doctorEmail, doctorName || "Doctor")])
+        .setSubject(`🟢 Nueva reserva: ${patientName}`)
+        .setHtml(htmlContent);
 
-      if (error) {
-        console.error('[NotificationService] Error de Resend:', error);
-        errorDetails = typeof error === 'string' ? error : JSON.stringify(error);
-      } else {
-        sendStatus = 'SENT';
-      }
+      const data = await mailersend.email.send(emailParams);
+      sendStatus = 'SENT';
 
-      return { success: !error, data, error };
+      return { success: true, data, error: null };
     } catch (err) {
       console.error('[NotificationService] Excepción enviando email al doctor:', err);
       errorDetails = err.message;
@@ -129,20 +127,16 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const { data, error } = await resend.emails.send({
-        from: `Cognify <${fromEmail}>`,
-        to: [patientEmail],
-        subject: subject,
-        html: htmlContent,
-      });
+      const emailParams = new EmailParams()
+        .setFrom(senderObj)
+        .setTo([new Recipient(patientEmail, patientName || "Paciente")])
+        .setSubject(subject)
+        .setHtml(htmlContent);
 
-      if (error) {
-        errorDetails = typeof error === 'string' ? error : JSON.stringify(error);
-      } else {
-        sendStatus = 'SENT';
-      }
+      const data = await mailersend.email.send(emailParams);
+      sendStatus = 'SENT';
 
-      return { success: !error, data, error };
+      return { success: true, data, error: null };
     } catch (err) {
       console.error('[NotificationService] Excepción enviando email al paciente:', err);
       errorDetails = err.message;
@@ -177,20 +171,16 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const { data, error } = await resend.emails.send({
-        from: `Cognify <${fromEmail}>`,
-        to: [patientEmail],
-        subject: `Recordatorio de tu cita mañana ⏰`,
-        html: htmlContent,
-      });
+      const emailParams = new EmailParams()
+        .setFrom(senderObj)
+        .setTo([new Recipient(patientEmail, patientName || "Paciente")])
+        .setSubject(`Recordatorio de tu cita mañana ⏰`)
+        .setHtml(htmlContent);
 
-      if (error) {
-        errorDetails = typeof error === 'string' ? error : JSON.stringify(error);
-      } else {
-        sendStatus = 'SENT';
-      }
+      const data = await mailersend.email.send(emailParams);
+      sendStatus = 'SENT';
 
-      return { success: !error, data, error };
+      return { success: true, data, error: null };
     } catch (err) {
       console.error('[NotificationService] Excepción en recordatorio:', err);
       errorDetails = err.message;
