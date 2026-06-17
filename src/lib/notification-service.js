@@ -1,4 +1,4 @@
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
 import { 
   newBookingForDoctorTemplate, 
@@ -7,12 +7,19 @@ import {
   appointmentReminderTemplate 
 } from './email-templates';
 
-// Instanciar MailerSend
-const mailersend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY || 'dummy_key_for_build',
+// Instanciar Nodemailer con Gmail SMTP
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
 });
-const fromEmail = process.env.MAILERSEND_FROM_EMAIL || 'notificaciones@cognify.app';
-const senderObj = new Sender(fromEmail, "Cognify");
+
+const fromName = process.env.SMTP_FROM_NAME || 'Cognify';
+const fromEmail = process.env.SMTP_FROM_EMAIL || 'cognify.reservas@gmail.com';
 
 // Supabase con Service Role para saltar RLS cuando sea necesario registrar logs internamente
 const supabaseAdmin = createClient(
@@ -66,16 +73,16 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const emailParams = new EmailParams()
-        .setFrom(senderObj)
-        .setTo([new Recipient(doctorEmail, doctorName || "Doctor")])
-        .setSubject(`🟢 Nueva reserva: ${patientName}`)
-        .setHtml(htmlContent);
+      const info = await transporter.sendMail({
+        from: `${fromName} <${fromEmail}>`,
+        to: doctorEmail,
+        subject: `🟢 Nueva reserva: ${patientName}`,
+        html: htmlContent,
+      });
 
-      const data = await mailersend.email.send(emailParams);
       sendStatus = 'SENT';
-
-      return { success: true, data, error: null };
+      console.log('[NotificationService] Email enviado al doctor:', info.messageId);
+      return { success: true, data: info, error: null };
     } catch (err) {
       console.error('[NotificationService] Excepción enviando email al doctor:', err);
       errorDetails = err.message;
@@ -127,16 +134,16 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const emailParams = new EmailParams()
-        .setFrom(senderObj)
-        .setTo([new Recipient(patientEmail, patientName || "Paciente")])
-        .setSubject(subject)
-        .setHtml(htmlContent);
+      const info = await transporter.sendMail({
+        from: `${fromName} <${fromEmail}>`,
+        to: patientEmail,
+        subject: subject,
+        html: htmlContent,
+      });
 
-      const data = await mailersend.email.send(emailParams);
       sendStatus = 'SENT';
-
-      return { success: true, data, error: null };
+      console.log('[NotificationService] Email enviado al paciente:', info.messageId);
+      return { success: true, data: info, error: null };
     } catch (err) {
       console.error('[NotificationService] Excepción enviando email al paciente:', err);
       errorDetails = err.message;
@@ -171,16 +178,16 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const emailParams = new EmailParams()
-        .setFrom(senderObj)
-        .setTo([new Recipient(patientEmail, patientName || "Paciente")])
-        .setSubject(`Recordatorio de tu cita mañana ⏰`)
-        .setHtml(htmlContent);
+      const info = await transporter.sendMail({
+        from: `${fromName} <${fromEmail}>`,
+        to: patientEmail,
+        subject: `Recordatorio de tu cita mañana ⏰`,
+        html: htmlContent,
+      });
 
-      const data = await mailersend.email.send(emailParams);
       sendStatus = 'SENT';
-
-      return { success: true, data, error: null };
+      console.log('[NotificationService] Recordatorio enviado:', info.messageId);
+      return { success: true, data: info, error: null };
     } catch (err) {
       console.error('[NotificationService] Excepción en recordatorio:', err);
       errorDetails = err.message;
