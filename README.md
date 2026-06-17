@@ -1,80 +1,167 @@
 # Cognify
 
 ![Cognify Logo](https://img.shields.io/badge/Cognify-SaaS-6366f1?style=for-the-badge)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?style=for-the-badge&logo=supabase)
+![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000?style=for-the-badge&logo=vercel)
 
 ## 🧠 ¿Qué es Cognify?
-**Cognify** es una plataforma SaaS (Software as a Service) de gestión clínica y expediente electrónico de próxima generación. Está diseñada para centralizar, simplificar y asegurar la práctica profesional de especialistas en salud mental, ofreciendo un entorno digital fluido, estético y altamente seguro.
 
-## 🎯 ¿Para qué es?
-El propósito de Cognify es eliminar la fricción administrativa y de gestión en la consulta clínica. Permite a los profesionales:
+**Cognify** es una plataforma SaaS (Software as a Service) de gestión clínica y expediente electrónico diseñada para profesionales de la salud mental. Centraliza, simplifica y asegura la práctica profesional ofreciendo un entorno digital fluido, estético y altamente seguro.
+
+## 🎯 Propósito
+
+Eliminar la fricción administrativa en la consulta clínica, permitiendo a los profesionales:
+
 - Mantener un registro ordenado y seguro de los expedientes de sus pacientes.
 - Agendar y gestionar citas médicas en un calendario interactivo.
-- Redactar notas clínicas, de evolución y observaciones de manera estructurada mediante un editor de texto enriquecido.
-- Visualizar métricas en tiempo real sobre la salud de su práctica profesional (retención de pacientes, citas próximas, sesiones completadas).
+- Redactar notas clínicas y de evolución mediante un editor de texto enriquecido.
+- Recibir y gestionar reservas de pacientes a través de un sistema de booking público.
+- Enviar notificaciones automáticas por correo electrónico.
+- Visualizar métricas en tiempo real sobre la salud de su práctica profesional.
 
 ## 👥 ¿Para quiénes es?
-Cognify está diseñado específicamente para profesionales de la salud mental y áreas afines:
-- Psicólogos clínicos.
-- Psiquiatras.
-- Terapeutas y psicoterapeutas.
-- Clínicas de salud mental de tamaño pequeño a mediano que requieran una herramienta moderna para la gestión de sus consultas.
+
+- Psicólogos clínicos
+- Psiquiatras
+- Terapeutas y psicoterapeutas
+- Clínicas de salud mental de tamaño pequeño a mediano
 
 ---
 
 ## ✨ Funcionalidades Principales
 
-1. **Dashboard y Analíticas en Tiempo Real**: Un panel de control que ofrece KPIs como número total de pacientes, citas del día, pacientes agendados y sesiones finalizadas, acompañados de gráficos visuales.
-2. **Gestión de Pacientes**: Directorio digital (CRUD) para mantener la información de contacto, antecedentes y datos demográficos de los pacientes.
-3. **Calendario Interactivo**: Sistema de agendamiento de citas vinculado directamente a los pacientes registrados.
-4. **Notas Clínicas (Expediente Electrónico)**: Módulo de redacción de notas de sesión (Therapy Sessions) con soporte para texto enriquecido (integración planeada/activa con Tiptap), permitiendo separar observaciones, tareas y progreso.
-5. **Autenticación y Seguridad Avanzada**: Inicio de sesión seguro con protección de rutas y manejo de sesiones.
+| Módulo | Descripción |
+|---|---|
+| **Dashboard** | Panel con KPIs en tiempo real: pacientes totales, citas del día, sesiones finalizadas y gráficos de actividad semanal. |
+| **Gestión de Pacientes** | Directorio digital (CRUD) con información de contacto, antecedentes y datos demográficos. |
+| **Calendario Interactivo** | Sistema de agendamiento vinculado a los pacientes registrados. |
+| **Notas Clínicas** | Editor de texto enriquecido para redactar notas de sesión, observaciones y progreso. |
+| **Sistema de Booking** | Página pública con URL personalizada (`/book/slug`) para que los pacientes reserven citas directamente. |
+| **Notificaciones por Email** | Correos automáticos al doctor (nueva reserva) y al paciente (aprobación/rechazo de cita). |
+| **Recordatorios Automáticos** | Cron Job diario que envía recordatorios 24 horas antes de cada cita confirmada. |
+| **Panel de Administración** | Gestión de usuarios, roles y configuración global del sistema. |
 
 ---
 
-## 🔗 ¿Cómo están conectadas las funcionalidades?
+## 🏗️ Stack Tecnológico
 
-El sistema funciona como un ecosistema integrado:
-- Al **crear un paciente** en el directorio, este se vuelve una entidad disponible en todo el sistema.
-- En el **Calendario**, al crear una cita, se vincula obligatoriamente (o de forma opcional) a un paciente existente. 
-- Al finalizar una cita, el profesional accede al módulo de **Notas de sesión**, donde redacta el progreso clínico. Estas notas quedan atadas al ID del paciente.
-- El **Dashboard** lee todas estas interacciones en tiempo real: cuenta los pacientes creados, busca en el calendario las citas del día para calcular las "Citas Hoy", y cruza datos para mostrar cuántos pacientes activos tienen una cita próxima.
-
----
-
-## 💼 Lógica de Negocio
-
-El modelo de negocio y operativo de Cognify se basa en el esquema SaaS multitenant (multi-inquilino). 
-- **Privacidad estricta**: Un profesional solo debe tener acceso a sus propios pacientes, citas y notas. La confidencialidad médico-paciente es el pilar del sistema.
-- **Flujo de trabajo clínico**: El sistema imita el flujo real de un terapeuta: 1) Admisión (Registro de paciente) -> 2) Programación (Calendario) -> 3) Consulta y Evolución (Notas clínicas) -> 4) Revisión de métricas de práctica (Dashboard).
-- **Escalabilidad para Suscripciones**: La arquitectura de base de datos y autenticación está preparada para introducir tiers de suscripción (ej. límite de pacientes en plan gratuito vs. ilimitado en plan premium).
-
----
-
-## 💻 Lógica de Programación
-
-Cognify está construido utilizando una arquitectura **Full-Stack serverless** moderna y orientada al rendimiento:
-
-*   **Framework Principal**: Next.js (App Router, React 19). Maneja tanto el frontend (UI) como el backend (API Routes).
-*   **Renderizado**: Utiliza un enfoque híbrido, con componentes del lado del servidor (SSR) para SEO y carga inicial rápida, y componentes del lado del cliente (`"use client"`) para interactividad (ej. gráficos, calendario).
-*   **Estilos y UI**: Tailwind CSS (PostCSS) para un diseño de "Atomic Design" con estética premium (modo oscuro, gradientes, glassmorphism). Iconografía proporcionada por `lucide-react`.
-*   **Gráficos y Visualización de Datos**: `recharts` para mostrar estadísticas de actividad semanal y distribución de estados de pacientes en el Dashboard.
-*   **Editor de Texto (Notas Clínicas)**: Tiptap para ofrecer un editor de texto enriquecido moderno, limpio y sin distracciones.
-*   **Manejo de Fechas**: `date-fns` para un formateo y cálculo de fechas eficiente y localizado (español).
+| Capa | Tecnología |
+|---|---|
+| **Framework** | Next.js 16 (App Router, React 19) |
+| **Estilos** | Tailwind CSS 4 (PostCSS) |
+| **Base de Datos** | Supabase (PostgreSQL + Row Level Security) |
+| **Autenticación** | Supabase Auth (OAuth, Magic Link, Email/Password) |
+| **Email** | Nodemailer (Gmail SMTP) |
+| **Gráficos** | Recharts |
+| **Iconografía** | Lucide React |
+| **Fechas** | date-fns + date-fns-tz |
+| **Validación** | Zod |
+| **Hosting** | Vercel (Serverless) |
+| **Cron Jobs** | Vercel Cron |
 
 ---
 
-## 🗄️ Lógica de Datos
+## 🚀 Instalación Local
 
-La capa de datos está gestionada por **Supabase** (PostgreSQL) y es el núcleo de la seguridad del sistema, utilizando una arquitectura que relega la seguridad directamente a la base de datos mediante **Row Level Security (RLS)**.
+### Prerrequisitos
 
-### Entidades Principales:
-- `User` / Auth: Entidad administrada por Supabase Auth. Representa al profesional de la salud.
-- `Patient`: Contiene la información del paciente. Tiene una llave foránea `doctor_id` que apunta al profesional.
-- `Appointment`: Representa los eventos en el calendario. Vinculada a un `doctor_id` y opcionalmente a un `patient_id`.
-- `TherapySession`: Representa las notas clínicas. Está vinculada a un `patient_id`.
+- Node.js 18+ 
+- npm o yarn
+- Cuenta en [Supabase](https://supabase.com)
+- Cuenta de Gmail con [Contraseña de Aplicación](https://myaccount.google.com/apppasswords)
 
-### Seguridad y RLS (Row Level Security):
-La lógica de datos asume que el backend podría ser vulnerable, por lo que la verdadera barrera de seguridad está en la base de datos (Zero Trust):
-1. **Políticas de Doctores**: Un usuario autenticado (`auth.uid()`) solo puede hacer `SELECT`, `INSERT`, `UPDATE` o `DELETE` en la tabla `Patient` o `Appointment` si el `doctor_id` de esa fila coincide con su UID.
-2. **Políticas Indirectas (Cascada)**: Para que un doctor vea las notas (`TherapySession`), la política verifica que la nota pertenezca a un `patient_id` que a su vez pertenezca a ese doctor. 
-3. **Optimización**: Se han creado índices (`idx_patient_doctor_id`, `idx_therapy_session_patient_id`, etc.) en las columnas utilizadas por las políticas RLS para garantizar que las consultas masivas se ejecuten en milisegundos sin sobrecargar la base de datos.
+### Pasos
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/NotoriousRed19/cognify.git
+cd cognify
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Configurar variables de entorno
+cp .env.example .env.local
+# Editar .env.local con tus credenciales reales
+
+# 4. Iniciar el servidor de desarrollo
+npm run dev
+```
+
+Abrir [http://localhost:3000](http://localhost:3000) en el navegador.
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+cognify/
+├── public/                  # Archivos estáticos (imágenes, favicon)
+├── src/
+│   ├── app/                 # Rutas de Next.js (App Router)
+│   │   ├── api/             # API Routes (backend serverless)
+│   │   │   ├── appointments/    # CRUD de citas
+│   │   │   ├── auth/            # Callbacks de autenticación
+│   │   │   ├── booking/         # Sistema de reservas públicas
+│   │   │   ├── cron/            # Tareas programadas (recordatorios)
+│   │   │   ├── dashboard/       # Métricas y analíticas
+│   │   │   ├── doctors/         # Datos del profesional
+│   │   │   ├── notifications/   # Gestión de notificaciones
+│   │   │   ├── patients/        # CRUD de pacientes
+│   │   │   └── sessions/        # Notas clínicas
+│   │   ├── admin/           # Panel de administración
+│   │   ├── book/            # Página pública de booking
+│   │   ├── dashboard/       # Dashboard del profesional
+│   │   ├── login/           # Inicio de sesión
+│   │   └── register/        # Registro de usuarios
+│   ├── Components/          # Componentes reutilizables de React
+│   ├── lib/                 # Lógica de negocio y servicios
+│   │   ├── notification-service.js   # Motor de correos (Nodemailer)
+│   │   ├── email-templates.js        # Plantillas HTML de correos
+│   │   ├── auth-guard.js             # Protección de rutas
+│   │   └── env.js                    # Validación de variables de entorno
+│   └── utils/               # Utilidades auxiliares
+├── supabase/                # Migraciones y configuración de Supabase
+├── vercel.json              # Configuración de Cron Jobs
+├── package.json             # Dependencias y scripts
+└── .env.example             # Plantilla de variables de entorno
+```
+
+---
+
+## 🔐 Seguridad
+
+Cognify implementa un modelo de seguridad **Zero Trust** con múltiples capas:
+
+1. **Row Level Security (RLS):** Cada tabla en Supabase tiene políticas que aseguran que un profesional solo acceda a sus propios datos.
+2. **Service Role Key:** Solo utilizada en el servidor (API Routes), nunca expuesta al cliente.
+3. **Protección de Rutas:** Middleware de autenticación que redirige usuarios no autenticados.
+4. **Cron Secret:** Endpoint de recordatorios protegido por un Bearer Token secreto.
+
+---
+
+## 📧 Sistema de Notificaciones
+
+| Evento | Destinatario | Descripción |
+|---|---|---|
+| Nueva reserva | Doctor | Correo inmediato cuando un paciente agenda una cita. |
+| Cita aprobada | Paciente | Confirmación cuando el doctor acepta la reserva. |
+| Cita rechazada | Paciente | Notificación cuando el doctor rechaza la reserva. |
+| Recordatorio 24h | Paciente | Correo automático diario (Cron Job) para citas de mañana. |
+
+---
+
+## 📄 Licencia
+
+Este proyecto está protegido bajo la Licencia MIT. Consulta el archivo [LICENSE.md](LICENSE.md) para más detalles.
+
+---
+
+## 👤 Autor
+
+**Mauricio Lopez** — [@NotoriousRed19](https://github.com/NotoriousRed19)
+
+---
+
+> Construido con ❤️ para profesionales de la salud mental.
