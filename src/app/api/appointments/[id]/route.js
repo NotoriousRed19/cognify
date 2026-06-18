@@ -46,16 +46,19 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    // Obtener la cita actual para ver si estamos aprobándola
+    // Obtener la cita actual y el nombre del doctor
     const { data: currentAppt } = await supabase
       .from("Appointment")
-      .select("*")
+      .select("*, User(name)")
       .eq("id", id)
       .single();
 
     if (!currentAppt) {
       return NextResponse.json({ error: "Cita no encontrada" }, { status: 404 });
     }
+    
+    // Extraer el nombre del doctor (User está unido por FK)
+    const realDoctorName = currentAppt.User?.name || "Especialista";
 
     // Si estamos aprobando una cita pública
     if (data.status === "CONFIRMED" && currentAppt.status === "PENDING_APPROVAL" && currentAppt.source === "PUBLIC") {
@@ -79,7 +82,7 @@ export async function PATCH(request, { params }) {
             appointmentId: id,
             patientEmail: email,
             patientName: currentAppt.guest_name,
-            doctorName: user.name || "Especialista",
+            doctorName: realDoctorName,
             appointmentDate: currentAppt.fecha_inicio,
             status: 'APPROVED'
           });
@@ -114,7 +117,7 @@ export async function PATCH(request, { params }) {
             appointmentId: id,
             patientEmail: email,
             patientName: currentAppt.guest_name,
-            doctorName: user.name || "Especialista",
+            doctorName: realDoctorName,
             appointmentDate: currentAppt.fecha_inicio,
             status: 'REJECTED'
           });
