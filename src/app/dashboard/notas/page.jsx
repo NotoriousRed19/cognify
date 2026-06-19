@@ -5,6 +5,34 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import NotesEditor from "@/Components/molecules/NotesEditor";
 
+/**
+ * Componente del Gestor de Notas Clínicas (NotasPage).
+ * 
+ * Propósito:
+ * Proveer al profesional un entorno seguro y estructurado para visualizar, 
+ * buscar, editar y organizar el historial clínico (notas, tareas, observaciones) 
+ * vinculado a cada sesión terapéutica.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización (`fetchSessions`): Consulta a Supabase las sesiones agendadas
+ *    (modelo `TherapySession`) y las cruza (JOIN interno) con la tabla `Patient` 
+ *    para obtener los nombres. Las ordena por fecha descendente.
+ * 2. Interfaz Dividida (Master-Detail):
+ *    - Columna Izquierda (Master): Barra de búsqueda en tiempo real que filtra `sessions` 
+ *      por el nombre del paciente. Al hacer clic, se selecciona la sesión (`selectedSession`).
+ *    - Columna Derecha (Detail): Contenedor principal que muestra información del 
+ *      paciente y un sistema de pestañas (Tabs).
+ * 3. Sistema de Pestañas (Tabs): Alterna el campo de la base de datos a visualizar/editar 
+ *    (`notas`, `tareas_pendientes`, `observaciones`).
+ * 4. Editor Enriquecido (`NotesEditor`): 
+ *    - Renderiza el contenido HTML guardado.
+ *    - `handleSaveField` actualiza el campo activo en Supabase (según el Tab)
+ *      y la fecha de modificación (`updatedAt`), sincronizando el estado local.
+ * 5. Eliminación (`handleDeleteSession`): Permite borrar una sesión clínica tras confirmación, 
+ *    llamando al endpoint DELETE `/api/sessions/[id]`.
+ * 
+ * @returns {JSX.Element} Vista del gestor de notas clínicas.
+ */
 export default function NotasPage() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);

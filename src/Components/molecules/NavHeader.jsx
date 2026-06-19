@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+/**
+ * NavHeader
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function NavHeader({ className, wrapperClassName, onLinkClick }) {
   return (
     <ul className={`flex gap-5 font-semibold ${wrapperClassName || ""}`}>

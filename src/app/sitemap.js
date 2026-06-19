@@ -1,3 +1,8 @@
+/**
+ * sitemap
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function sitemap() {
   return [
     {

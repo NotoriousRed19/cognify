@@ -1,3 +1,8 @@
+/**
+ * GoogleIcon
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function GoogleIcon({ size = 20 }) {
   return (
     <svg

@@ -18,6 +18,21 @@ const CreateAppointmentSchema = z.object({
   path: ["fecha_fin"]
 });
 
+/**
+ * Manejador de la petición GET para la ruta API de citas (Appointments).
+ * 
+ * Propósito:
+ * Consultar las citas agendadas por el profesional de la salud autenticado.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica que el usuario esté autenticado (`requireAuth`).
+ * 2. Filtra citas excluyendo aquellas con estado "CANCELADA" o "REJECTED".
+ * 3. Si se incluyen parámetros `start_date` y `end_date`, acota la búsqueda al rango; 
+ *    si no, impone un límite de seguridad de 500 registros.
+ * 
+ * @param {Request} request - Objeto de la petición con parámetros opcionales de consulta.
+ * @returns {Promise<Response>} Respuesta JSON con las citas encontradas o un mensaje de error.
+ */
 export async function GET(request) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
@@ -63,6 +78,22 @@ export async function GET(request) {
   }
 }
 
+/**
+ * Manejador de la petición POST para crear una nueva cita médica.
+ * 
+ * Propósito:
+ * Agendar una nueva cita verificando estrictamente la disponibilidad del horario.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica autenticación y suscripción activa (`requireActiveSubscription`).
+ * 2. Valida el esquema de datos entrante usando Zod.
+ * 3. Si se asocia un paciente (`patient_id`), comprueba que pertenezca al doctor actual.
+ * 4. Busca colisiones de horario (overlapping) en citas no canceladas.
+ * 5. Inserta la cita si el bloque de tiempo está disponible.
+ * 
+ * @param {Request} request - Objeto de la petición conteniendo los datos de la nueva cita.
+ * @returns {Promise<Response>} Respuesta JSON con la cita creada o los errores de validación/conflicto.
+ */
 export async function POST(request) {
   try {
     const { user, supabase, errorResponse } = await requireActiveSubscription();

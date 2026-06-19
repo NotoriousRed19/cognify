@@ -17,6 +17,33 @@ import {
 
 const supabase = createClient();
 
+/**
+ * Componente de la Consola de Administración (AdminPage).
+ * 
+ * Propósito:
+ * Proporcionar una interfaz restringida para que el administrador de la plataforma
+ * pueda gestionar los usuarios registrados (doctores), ver el estado de sus suscripciones
+ * y ejecutar acciones manuales (renovar o suspender planes).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización: Utiliza `useState` para el listado de usuarios, estado de carga, errores y filtros.
+ * 2. Autenticación (`checkAdmin` en `useEffect`):
+ *    - Comprueba si hay una sesión activa. Si no, redirige al `/login`.
+ *    - Verifica si el usuario actual tiene privilegios de administrador (por su metadato de rol
+ *      o validando un correo especial en su defecto). Si no lo es, redirige al `/dashboard`.
+ * 3. Carga de datos (`fetchUsers`):
+ *    - Ejecuta un GET a `/api/admin/users`. Si hay un 403, muestra un mensaje de acceso denegado.
+ * 4. Interacción de gestión (`handleUpdateSubscription`):
+ *    - Ejecuta un PATCH a `/api/admin/subscriptions` enviando el `user_id`, el nuevo estado 
+ *      (`plan_status`) y días extra si aplica. Al finalizar, recarga la lista.
+ * 5. Filtros y Búsqueda:
+ *    - Filtra en el cliente la lista de usuarios recuperada por nombre, correo o estado 
+ *      del plan (`ACTIVE`, `TRIAL`, `EXPIRED`), facilitando el análisis visual.
+ * 6. Renderizado: Muestra la consola con indicadores (usuarios registrados), buscador, selector de 
+ *    estado y la tabla principal interactiva.
+ * 
+ * @returns {JSX.Element} La vista completa del administrador (o la pantalla de carga/error).
+ */
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

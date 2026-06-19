@@ -2,6 +2,29 @@ import { createClient } from "@/utils/supabase/server";
 import BookingClient from "./BookingClient";
 import { notFound } from "next/navigation";
 
+/**
+ * Página Pública de Reservas (BookDoctorPage).
+ * 
+ * Propósito:
+ * Sirve como punto de entrada público para que los pacientes puedan agendar 
+ * citas con un profesional específico, accediendo a través de su URL personalizada (slug).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Resolución de Slug (`params.slug`): Captura la ruta dinámica generada para el doctor.
+ * 2. Validación de Perfil:
+ *    - Inicializa `supabase` con permisos anónimos/públicos.
+ *    - Consulta el modelo `User` filtrando por el slug y asegurando que `booking_enabled` sea true.
+ *    - Si el perfil no existe o no se encuentra, invoca `notFound()` provocando un error 404.
+ *    - Si el perfil existe pero tiene `booking_enabled` false, renderiza una pantalla de bloqueo 
+ *      indicando que las reservas no están disponibles en este momento.
+ * 3. Renderizado del Flujo de Reserva:
+ *    - Si todas las validaciones pasan, inyecta los datos extraídos (id, nombre, instrucciones de pago)
+ *      en el componente interactivo `BookingClient`, el cual maneja el proceso multipaso.
+ * 
+ * @param {Object} props - Propiedades de Next.js.
+ * @param {Promise<{ slug: string }>} props.params - Parámetros de la URL dinámica.
+ * @returns {Promise<JSX.Element>} La vista pública de reservas o la pantalla de bloqueo.
+ */
 export default async function BookDoctorPage({ params }) {
   const { slug } = await params;
 

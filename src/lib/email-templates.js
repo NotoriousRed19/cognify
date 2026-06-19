@@ -60,7 +60,12 @@ const baseHtml = (content) => `
 </html>
 `;
 
-export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientContact, patientEmail, appointmentDate, dashboardUrl, selectedService }) => {
+/**
+ * newBookingForDoctorTemplate
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
+export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientContact, patientEmail, appointmentDate, dashboardUrl, selectedService, paymentInfo }) => {
   // Escapar TODA entrada del usuario para prevenir XSS/inyección HTML
   const safeDoctorName = escapeHtml(doctorName);
   const safePatientName = escapeHtml(patientName);
@@ -68,13 +73,27 @@ export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientCo
   const safePatientEmail = escapeHtml(patientEmail);
   const safeSelectedService = selectedService ? escapeHtml(selectedService) : null;
 
+  let paymentHtml = '';
+  if (paymentInfo) {
+    paymentHtml = `
+      <div style="background: #e9e4f5; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+        <h3 style="margin: 0 0 12px; font-size: 16px; color: #7b61ae;">💰 Detalles de Pago Reportado</h3>
+        <p style="margin: 0 0 8px; font-size: 14px; color: #1a1a2e;"><strong>Titular:</strong> ${escapeHtml(paymentInfo.titular)} ${escapeHtml(paymentInfo.apellido)}</p>
+        <p style="margin: 0 0 8px; font-size: 14px; color: #1a1a2e;"><strong>C.I.:</strong> ${escapeHtml(paymentInfo.ci)}</p>
+        <p style="margin: 0 0 8px; font-size: 14px; color: #1a1a2e;"><strong>Teléfono:</strong> ${escapeHtml(paymentInfo.telefono)}</p>
+        <p style="margin: 0; font-size: 14px; color: #1a1a2e;"><strong>Referencia:</strong> <span style="background: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${escapeHtml(paymentInfo.referencia)}</span></p>
+        <p style="margin: 10px 0 0; font-size: 13px; color: #64647a;"><em>El comprobante de pago en imagen se encuentra adjunto a este correo.</em></p>
+      </div>
+    `;
+  }
+
   return baseHtml(`
     <h2 style="color: #1a1a2e; font-size: 22px; font-weight: 700; margin: 0 0 12px;">Nueva Solicitud de Cita</h2>
     <p style="color: #64647a; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
       Hola Dr(a). ${safeDoctorName}, has recibido una nueva solicitud de cita.
     </p>
     
-    <div style="background: #f8f7fc; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+    <div style="background: #f8f7fc; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
       <p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Paciente:</strong> ${safePatientName}</p>
       ${safeSelectedService ? `<p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Servicio:</strong> <span style="background: #e9e4f5; color: #7b61ae; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 13px;">${safeSelectedService}</span></p>` : ''}
       <p style="margin: 0 0 10px; font-size: 14px; color: #1a1a2e;"><strong>Fecha y Hora:</strong> ${formatDate(appointmentDate)}</p>
@@ -82,8 +101,10 @@ export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientCo
       <p style="margin: 0; font-size: 14px; color: #1a1a2e;"><strong>Correo:</strong> ${safePatientEmail || 'No proporcionado'}</p>
     </div>
 
+    ${paymentHtml}
+
     <p style="color: #64647a; font-size: 15px; line-height: 1.7; margin: 0 0 28px;">
-      Por favor, ingresa a tu panel de control para aprobar o rechazar esta solicitud. Recuerda verificar cualquier pago pendiente.
+      Por favor, revisa el comprobante adjunto y luego ingresa a tu panel de control para aprobar o rechazar esta solicitud.
     </p>
 
     <div style="text-align: center;">
@@ -92,6 +113,11 @@ export const newBookingForDoctorTemplate = ({ doctorName, patientName, patientCo
   `);
 };
 
+/**
+ * bookingApprovedTemplate
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export const bookingApprovedTemplate = ({ patientName, doctorName, appointmentDate }) => {
   const safePatientName = escapeHtml(patientName);
   const safeDoctorName = escapeHtml(doctorName);
@@ -113,6 +139,11 @@ export const bookingApprovedTemplate = ({ patientName, doctorName, appointmentDa
   `);
 };
 
+/**
+ * bookingRejectedTemplate
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export const bookingRejectedTemplate = ({ patientName, doctorName, appointmentDate }) => {
   const safePatientName = escapeHtml(patientName);
   const safeDoctorName = escapeHtml(doctorName);
@@ -133,6 +164,11 @@ export const bookingRejectedTemplate = ({ patientName, doctorName, appointmentDa
   `);
 };
 
+/**
+ * appointmentReminderTemplate
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export const appointmentReminderTemplate = ({ patientName, doctorName, appointmentDate, customMessage }) => {
   const safePatientName = escapeHtml(patientName);
   const safeDoctorName = escapeHtml(doctorName);

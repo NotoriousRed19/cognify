@@ -7,6 +7,33 @@ const DAYS_OF_WEEK = [
   "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"
 ];
 
+/**
+ * Componente de Configuración del Profesional (ConfiguracionPage).
+ * 
+ * Propósito:
+ * Proveer una interfaz centralizada para que el profesional (Doctor) gestione 
+ * su perfil público, servicios/precios, notificaciones y disponibilidad horaria.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización (`fetchConfig`): Llama a `/api/dashboard/configuracion` al cargar.
+ *    Recupera y mapea en el estado local la configuración general del usuario, 
+ *    los servicios/precios (en JSON), configuración de notificaciones y slots de disponibilidad.
+ * 2. Gestión de Estado:
+ *    - `formData`: Agrupa los campos de configuración general (slug, pagos, servicios, notificaciones).
+ *    - `availability`: Arreglo dinámico que define los bloques horarios de atención por día.
+ * 3. Modificación de Horarios:
+ *    - Funciones auxiliares (`handleAddSlot`, `handleRemoveSlot`, `handleSlotChange`) permiten 
+ *      agregar, editar o eliminar rangos de horas para los 7 días de la semana de forma reactiva.
+ * 4. Validación y Guardado (`handleSubmit`):
+ *    - Limpia y formatea el `slug` (URL personalizada).
+ *    - Envía todo el estado empaquetado vía POST a `/api/dashboard/configuracion`.
+ *    - Maneja la colisión de "Slug en uso" (`slug_in_use`), mostrando sugerencias alternativas
+ *      generadas por el backend y permitiendo seleccionarlas (`applySuggestion`).
+ * 5. Interfaz de Usuario: Formularios estructurados en secciones tipo tarjeta (Perfil Público, 
+ *    Servicios, Notificaciones, Horarios) con validación visual y feedback de éxito/error.
+ * 
+ * @returns {JSX.Element} La página completa de configuración.
+ */
 export default function ConfiguracionPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

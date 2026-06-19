@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 import { requireAuth, requireActiveSubscription } from "@/lib/auth-guard";
 
+/**
+ * Manejador de la petición GET para la ruta API de pacientes (Patients).
+ * 
+ * Propósito:
+ * Consultar la lista de pacientes registrados bajo el profesional autenticado.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica autenticación (`requireAuth`).
+ * 2. Consulta la tabla `Patient` seleccionando los campos principales de contacto e identificación.
+ * 3. Ordena los resultados por fecha de creación de forma descendente (los más recientes primero).
+ * 
+ * @param {Request} request - Objeto de la petición entrante.
+ * @returns {Promise<Response>} Respuesta JSON con el listado de pacientes o un mensaje de error.
+ */
 export async function GET(request) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
@@ -23,6 +37,25 @@ export async function GET(request) {
   }
 }
 
+/**
+ * Manejador de la petición POST para registrar un nuevo paciente.
+ * 
+ * Propósito:
+ * Crear un nuevo expediente de paciente validando previamente que no existan duplicados
+ * en los datos críticos de identificación y contacto.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica que el profesional esté autenticado y con una suscripción activa.
+ * 2. Extrae los datos enviados en el cuerpo JSON de la petición.
+ * 3. Valida la presencia de campos obligatorios (nombre).
+ * 4. Si se incluyen `identificacion`, `celular` o `email`, ejecuta una consulta tipo OR 
+ *    para buscar pacientes del mismo doctor con esos datos y evitar registros duplicados.
+ * 5. Valida y formatea la fecha de nacimiento.
+ * 6. Inserta el nuevo paciente forzando el `doctor_id` actual.
+ * 
+ * @param {Request} request - Objeto de la petición con los datos del nuevo paciente.
+ * @returns {Promise<Response>} Respuesta JSON con el paciente creado o un error HTTP (ej. 409 Conflict).
+ */
 export async function POST(request) {
   try {
     const { user, supabase, errorResponse } = await requireActiveSubscription();

@@ -3,6 +3,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Save } from 'lucide-react';
 
+/**
+ * NotesEditor
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function NotesEditor({ initialContent = "", onSave, readOnly = false }) {
   const cleanContent = (html) => {
     let text = html || "";

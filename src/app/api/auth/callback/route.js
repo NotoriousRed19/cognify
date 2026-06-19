@@ -2,6 +2,30 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Manejador de la petición GET para el callback de autenticación (OAuth / Magic Links).
+ * 
+ * Propósito:
+ * Procesar el código temporal (`code`) devuelto por Supabase después de que 
+ * un usuario se autentica a través de un proveedor externo (Google) o Magic Link, 
+ * intercambiándolo por una sesión válida.
+ * 
+ * Flujo de ejecución:
+ * 1. Extrae los parámetros de la URL (`code`, `action`, `error`, `next`).
+ * 2. Si el proveedor de OAuth devuelve un error, redirige al login con el mensaje.
+ * 3. Si hay un código, llama a `exchangeCodeForSession` para obtener la sesión del usuario.
+ * 4. Si el intercambio falla (código expirado/usado), redirige con mensajes descriptivos.
+ * 5. Evalúa si es un usuario "nuevo" o "existente" calculando la diferencia
+ *    entre `created_at` y el tiempo actual (ventana de 60 segundos por latencia).
+ * 6. Aplica lógica de negocio restrictiva: 
+ *    - Bloquea intentos de 'login' de usuarios que no se han registrado previamente.
+ *    - Bloquea intentos de 'register' de cuentas que ya existen en la base de datos.
+ * 7. Redirige a la ruta definida en `next` (o `/dashboard`) agregando `session_init=true`
+ *    para que el frontend limpie estados previos de sesión.
+ * 
+ * @param {Request} request - Objeto de la petición con los parámetros de búsqueda (query params).
+ * @returns {Promise<Response>} Redirección HTTP a la aplicación o a la pantalla de error.
+ */
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')

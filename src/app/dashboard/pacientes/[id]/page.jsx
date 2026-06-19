@@ -226,6 +226,34 @@ function StandaloneSessionEntry({ session, index, total, onDeleteNote }) {
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
+/**
+ * Componente del Perfil Detallado del Paciente (PatientProfilePage).
+ * 
+ * Propósito:
+ * Mostrar la vista integral de un paciente específico, incluyendo sus datos personales, 
+ * historial médico, medicación, estadísticas de asistencia y una línea de tiempo unificada 
+ * de todas sus citas y notas clínicas (sesiones).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización (`fetchPatientDetail`): Obtiene los datos del paciente desde `/api/patients/[id]`.
+ * 2. Edición in-place (Inline Editing):
+ *    - Permite modificar el email, historial médico y medicación directamente desde la vista,
+ *      manejando estados locales (`isEditing...`, `editable...`) y enviando PATCH a la API.
+ * 3. Línea de Tiempo Unificada (`useMemo` en `timelineEntries`):
+ *    - Cruza las citas (Appointments) con las notas (TherapySessions) basándose en la fecha (`isSameDay`).
+ *    - Clasifica cada entrada en: Próximas (citas futuras), Completadas (citas pasadas con nota), 
+ *      Sin registro (citas pasadas sin nota), y Standalone (notas sin cita vinculada).
+ *    - Genera estadísticas dinámicas (total, completadas, sin registro, próximas).
+ * 4. Componentes Secundarios:
+ *    - `AppointmentEntry`: Tarjeta expandible que muestra los detalles de una cita y su nota asociada.
+ *    - `StandaloneSessionEntry`: Tarjeta para notas clínicas creadas manualmente sin una cita previa.
+ * 5. Interfaz y Modales:
+ *    - Incorpora un sistema de pestañas (Tabs) para filtrar la línea de tiempo.
+ *    - Modal flotante (`isSessionModalOpen`) para registrar nuevas notas clínicas (vinculadas a 
+ *      citas "Sin registro" o como entradas independientes).
+ * 
+ * @returns {JSX.Element} El perfil detallado e interactivo del paciente.
+ */
 export default function PatientProfilePage() {
   const params   = useParams();
   const router   = useRouter();

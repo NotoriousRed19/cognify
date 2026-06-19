@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+/**
+ * NavFooter
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function NavFooter({ className, wrapperClassName }) {
   return (
     <ul className={`flex gap-5 font-semibold ${wrapperClassName || ""}`}>

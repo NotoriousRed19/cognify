@@ -2,6 +2,26 @@
 
 import { AlertOctagon } from "lucide-react";
 
+/**
+ * Componente de Pantalla de Bloqueo por Facturación (BillingLockScreen).
+ * 
+ * Propósito:
+ * Actuar como una barrera restrictiva ("Hard Gate") para los usuarios cuya 
+ * suscripción a la plataforma haya expirado. Impide el acceso al resto del 
+ * dashboard y herramientas clínicas.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Restricción de navegación: Este componente está diseñado para renderizarse 
+ *    cuando el `DashboardLayout` detecta un plan `EXPIRED` y fuerza una 
+ *    redirección a esta ruta (`/dashboard/billing`).
+ * 2. Mensaje de alerta: Presenta un mensaje claro e ineludible informando 
+ *    sobre la suspensión del servicio.
+ * 3. Llamado a la acción (CTA): Proporciona un enlace directo a WhatsApp
+ *    (con un mensaje predefinido) para contactar a la administración y 
+ *    gestionar la renovación del plan.
+ * 
+ * @returns {JSX.Element} La vista de bloqueo de suscripción.
+ */
 export default function BillingLockScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-5rem)] p-4 text-center">

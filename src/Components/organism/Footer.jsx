@@ -2,6 +2,15 @@ import { Brain } from "lucide-react";
 import NavFooter from "@/Components/molecules/NavFooter";
 import Link from "next/link";
 
+/**
+ * Componente del pie de página (Footer).
+ * 
+ * Representa la parte inferior de la interfaz en la vista pública (landing).
+ * Incluye el logotipo de Cognify, enlaces de navegación secundarios (NavFooter)
+ * y la declaración de derechos de autor.
+ * 
+ * @returns {JSX.Element} El pie de página renderizado.
+ */
 export default function Footer() {
   return (
     <footer className="justify-center items-center py-8 bg-muted/50 border-t border-border/50">

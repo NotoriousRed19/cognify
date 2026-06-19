@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, Users, CreditCard, RotateCcw, Ban, Activity, RefreshCw, Menu, X, LogOut, LayoutDashboard, Search, Filter } from "lucide-react";
 
+/**
+ * Página principal del módulo administrativo (AdminPage).
+ * 
+ * Este componente se encarga de:
+ * 1. Obtener y mostrar la lista de todos los usuarios registrados.
+ * 2. Filtrar usuarios por término de búsqueda y estado de suscripción.
+ * 3. Permitir renovar suscripciones o suspender usuarios directamente.
+ * 
+ * Requiere que el usuario esté autenticado y tenga privilegios administrativos.
+ * 
+ * @returns {JSX.Element} La interfaz de usuario del panel de administración.
+ */
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +25,7 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const router = useRouter();
 
-  // Filtered users logic
+  // Lógica de usuarios filtrados
   const filteredUsers = users.filter((user) => {
     const searchMatch = 
       (user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,10 +119,10 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-dvh bg-background relative overflow-hidden selection:bg-primary/20">
-      {/* Soft glowing orb in background */}
+      {/* Orbe de luz suave en el fondo */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-      {/* Top utility nav (Hamburger) */}
+      {/* Navegación de utilidades superior (Menú de hamburguesa) */}
       <div className="absolute top-6 right-6 md:right-8 z-50">
         <div className="relative">
           <button
@@ -124,7 +136,7 @@ export default function AdminPage() {
             )}
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Menú desplegable */}
           {isMenuOpen && (
             <div 
               className="absolute right-0 mt-4 w-56 rounded-2xl bg-background/80 backdrop-blur-2xl border border-border shadow-elevated overflow-hidden animate-in fade-in zoom-in-95 duration-300 origin-top-right"
@@ -153,7 +165,7 @@ export default function AdminPage() {
 
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-16 md:py-24 relative z-10">
         
-        {/* Header Section */}
+        {/* Sección de cabecera */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10">
@@ -179,18 +191,18 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Double-Bezel Card Container */}
+        {/* Contenedor de tarjeta con doble bisel */}
         <div className="p-2 rounded-[2.5rem] bg-foreground/2 border border-foreground/4">
           <div className="bg-card rounded-4xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] border border-border/50 overflow-hidden relative">
             
-            {/* Header Toolbar */}
+            {/* Barra de herramientas de cabecera */}
             <div className="px-6 py-4 border-b border-border/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/20">
               <div className="flex items-center gap-3">
                 <CreditCard className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
                 <h3 className="font-semibold text-foreground tracking-tight">Suscripciones Activas</h3>
               </div>
               
-              {/* Search and Filters */}
+              {/* Búsqueda y Filtros */}
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                 <div className="relative w-full sm:w-64">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" strokeWidth={2} />
@@ -227,7 +239,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Content Table / List */}
+            {/* Tabla / Lista de Contenido */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>

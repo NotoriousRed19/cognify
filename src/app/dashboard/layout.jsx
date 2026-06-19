@@ -19,6 +19,33 @@ import BillingBanner from "@/Components/molecules/BillingBanner";
 // Cliente Supabase instanciado una sola vez a nivel de módulo
 const supabase = createClient();
 
+/**
+ * Componente Layout principal para todo el Dashboard de Cognify.
+ * 
+ * Propósito:
+ * Envolver todas las páginas protegidas del dashboard, proveyendo la estructura 
+ * base de navegación (Sidebar en desktop, Bottom Nav en móvil), manejo de sesión,
+ * guardián de rutas (Role Guards) y barra de alertas de facturación.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización: Utiliza Supabase para verificar si hay una sesión activa al
+ *    cargar el componente (`getSession`). Si no la hay, expulsa a `/login`.
+ * 2. Carga de Suscripción (`fetchPlanSubscription`): Consulta el estado del plan 
+ *    del usuario para inyectar banners si el plan expiró o está en prueba.
+ * 3. Role-Based Access Control (RBAC):
+ *    - Determina si el usuario es "Administrador" o "Usuario".
+ *    - Un `useEffect` actúa como guardián: bloquea a usuarios estándar de rutas `/admin`, 
+ *      y enruta a los administradores allí por defecto.
+ * 4. Suscripción Expirada (Hard Gate): 
+ *    - Si el plan es `EXPIRED`, bloquea la navegación forzando a `/dashboard/billing`.
+ * 5. Interfaz Adaptativa:
+ *    - Construye opciones de menú condicionales según el rol.
+ *    - Renderiza un Sidebar colapsable (Desktop) y una barra fija inferior (Móvil).
+ * 
+ * @param {Object} props - Propiedades de React.
+ * @param {React.ReactNode} props.children - Las páginas anidadas a renderizar.
+ * @returns {JSX.Element} Estructura base del Dashboard o pantalla de carga.
+ */
 export default function DashboardLayout({ children }) {
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState("Usuario");

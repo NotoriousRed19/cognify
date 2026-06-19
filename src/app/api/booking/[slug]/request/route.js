@@ -15,9 +15,38 @@ const RequestSchema = z.object({
   nacionalidad: z.string().min(1, "La nacionalidad es requerida").max(100),
   sexo: z.string().min(1, "El sexo es requerido").max(50),
   fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha de nacimiento inválido"),
-  email: z.string().email("Formato de correo inválido").optional().or(z.literal(""))
+  email: z.string().email("Formato de correo inválido").optional().or(z.literal("")),
+  paymentInfo: z.object({
+    titular: z.string().min(1, "El nombre del titular es requerido"),
+    apellido: z.string().min(1, "El apellido del titular es requerido"),
+    ci: z.string().min(1, "La cédula del titular es requerida"),
+    telefono: z.string().min(1, "El teléfono del titular es requerido"),
+    referencia: z.string().min(1, "La referencia de pago es requerida")
+  }),
+  paymentReceipt: z.string().regex(/^data:image\/(jpeg|png);base64,/, "Comprobante inválido")
 });
 
+/**
+ * Manejador de la petición POST para procesar solicitudes de reserva de pacientes desde el portal público.
+ * 
+ * Propósito:
+ * Recibir, validar y procesar una solicitud de cita médica hecha por un paciente,
+ * guardándola como "PENDING_APPROVAL" y notificando al profesional correspondiente.
+ * 
+ * Flujo de ejecución:
+ * 1. Extrae el `slug` (identificador público del doctor) de los parámetros de la URL.
+ * 2. Valida exhaustivamente el payload JSON (fechas, datos personales, comprobante de pago) usando Zod.
+ * 3. Obtiene el correo y nombre del doctor correspondiente al `slug` en Supabase.
+ * 4. Convierte la fecha y hora proporcionada por el paciente (considerando la zona horaria) a UTC exacto.
+ * 5. Ejecuta la función RPC `rpc_request_appointment` en base de datos para manejar
+ *    la concurrencia y asegurar que el bloque de tiempo siga realmente disponible.
+ * 6. Captura errores del RPC (horario ocupado, doctor no existe, reservas deshabilitadas).
+ * 7. Si la cita se registra, envía un correo no bloqueante al doctor con el comprobante de pago.
+ * 
+ * @param {Request} request - Objeto de la petición con los datos personales y de pago del paciente.
+ * @param {Object} context - Objeto conteniendo los parámetros de la URL (`slug`).
+ * @returns {Promise<Response>} Respuesta JSON indicando el éxito y el ID de la cita, o un error (ej. 409).
+ */
 export async function POST(request, { params }) {
   const { slug } = await params;
   
@@ -30,7 +59,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.errors }, { status: 400 });
     }
     
-    const { date, time, service, nombre, apellido, identificacion, celular, nacionalidad, sexo, fecha_nacimiento, email } = parsed.data;
+    const { date, time, service, nombre, apellido, identificacion, celular, nacionalidad, sexo, fecha_nacimiento, email, paymentInfo, paymentReceipt } = parsed.data;
 
     const guest_name = `${nombre} ${apellido}`;
     const guest_details = {
@@ -54,7 +83,7 @@ export async function POST(request, { params }) {
       .eq('slug', slug)
       .single();
 
-    // Default a una zona horaria (TODO: obtenerla del doctor desde la BD en el futuro)
+    // Zona horaria por defecto (Venezuela)
     const doctorTimeZone = "America/Caracas";
 
     // Calcular el UTC exacto del inicio
@@ -109,7 +138,9 @@ export async function POST(request, { params }) {
           patientEmail: email,
           appointmentDate: slotStartUtc.toISOString(),
           appointmentId: result.appointment_id,
-          selectedService: service
+          selectedService: service,
+          paymentInfo,
+          paymentReceipt
         });
       }
     } catch (notifErr) {

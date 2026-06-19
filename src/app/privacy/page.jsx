@@ -1,8 +1,26 @@
+/**
+ * Metadatos para la ruta de Políticas de Privacidad.
+ * Optimización SEO y configuración de título/descripción para la página `/privacy`.
+ */
 export const metadata = {
   title: "Política de Privacidad | Cognify",
   description: "Política de Privacidad de Cognify.",
 };
 
+/**
+ * Página de Políticas de Privacidad (PrivacyPage).
+ * 
+ * Propósito:
+ * Proveer a los usuarios y pacientes una vista pública, clara y estática sobre
+ * cómo Cognify maneja la recopilación, protección y privacidad de sus datos de salud.
+ * 
+ * Elementos clave:
+ * - Cumplimiento normativo básico de plataformas de salud mental.
+ * - Estructura semántica simple basada en títulos (h2) y párrafos para fácil lectura.
+ * - Diseño coherente (glassmorphism en `bg-card`) con el resto de la landing.
+ * 
+ * @returns {JSX.Element} La vista estática con el texto legal de privacidad.
+ */
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-gradient-soft pt-32 pb-20">

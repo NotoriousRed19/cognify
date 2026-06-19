@@ -14,6 +14,18 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/**
+ * Gráfico de Dona: Estado de Pacientes (PatientStatusChart).
+ * 
+ * Muestra visualmente la proporción de pacientes que tienen una cita próxima
+ * versus aquellos que no tienen citas pendientes.
+ * Incluye en el centro del gráfico el porcentaje de "Retención".
+ * 
+ * @param {Object} props - Propiedades del componente.
+ * @param {Array} props.data - Arreglo de datos para el gráfico de dona.
+ * @param {number} props.retentionPct - Porcentaje calculado de retención de pacientes.
+ * @returns {JSX.Element | null} El gráfico renderizado o null si no hay datos.
+ */
 export function PatientStatusChart({ data, retentionPct }) {
   if (!data || data.length === 0) return null;
   return (
@@ -50,6 +62,16 @@ export function PatientStatusChart({ data, retentionPct }) {
   );
 }
 
+/**
+ * Gráfico de Barras: Actividad Semanal (WeeklyActivityChart).
+ * 
+ * Muestra visualmente el volumen de citas agendadas por día a lo largo
+ * de la semana actual mediante barras interactivas.
+ * 
+ * @param {Object} props - Propiedades del componente.
+ * @param {Array} props.data - Arreglo de objetos con los días y la cantidad de citas.
+ * @returns {JSX.Element | null} El gráfico renderizado o null si no hay datos.
+ */
 export function WeeklyActivityChart({ data }) {
   if (!data || data.length === 0) return null;
   return (

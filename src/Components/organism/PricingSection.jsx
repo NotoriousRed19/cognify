@@ -1,6 +1,11 @@
 import { Check, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * PricingSection
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function PricingSection() {
   const plan = {
     name: "Profesional",

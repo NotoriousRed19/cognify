@@ -2,6 +2,28 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { fromZonedTime, toZonedTime, format } from "date-fns-tz";
 
+/**
+ * Manejador de la petición GET para consultar la disponibilidad de horarios de un doctor.
+ * 
+ * Propósito:
+ * Obtener y calcular los "slots" (bloques de tiempo) disponibles para que un paciente
+ * pueda agendar una cita en una fecha específica, basándose en el horario de 
+ * disponibilidad del profesional y las citas ya ocupadas.
+ * 
+ * Flujo de ejecución:
+ * 1. Extrae el `slug` del doctor y la fecha consultada (`dateQuery`).
+ * 2. Utiliza la función RPC `rpc_get_doctor_slots_info` para recuperar en una sola consulta
+ *    la disponibilidad semanal, las citas existentes y el estado de las reservas.
+ * 3. Valida que el doctor tenga la funcionalidad de reservas activada (`booking_enabled`).
+ * 4. Obtiene la información de precios (`pricing_info`) para enviarla al cliente.
+ * 5. Genera todos los bloques teóricos de 1 hora según el horario base configurado para ese día de la semana.
+ * 6. Filtra los bloques que se solapen (overlap) con citas ya confirmadas o en revisión.
+ * 7. Aplica una regla estricta de tiempo de gracia: descarta los bloques que estén a menos de 2 horas de la hora UTC actual.
+ * 
+ * @param {Request} request - Petición entrante, incluye el parámetro de búsqueda `?date=yyyy-mm-dd`.
+ * @param {Object} context - Objeto con los parámetros de la URL (`slug`).
+ * @returns {Promise<Response>} Respuesta JSON con los horarios calculados (`slots`) y precios (`pricing_info`).
+ */
 export async function GET(request, { params }) {
   const { slug } = await params;
   const { searchParams } = new URL(request.url);

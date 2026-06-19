@@ -7,6 +7,28 @@ import { createClient } from "@/utils/supabase/client";
 
 const supabase = createClient();
 
+/**
+ * Página de Recuperación de Contraseña (ForgotPasswordPage).
+ * 
+ * Propósito:
+ * Proveer a los usuarios (profesionales) una interfaz para solicitar 
+ * un enlace seguro de restablecimiento de contraseña vía correo electrónico.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización (`supabase`): Instancia el cliente de Supabase (lado cliente).
+ * 2. Gestión de Estado: Maneja el input del correo electrónico (`email`), estado 
+ *    de carga (`loading`), y mensajes de retroalimentación (`message`, `error`).
+ * 3. Envío del Formulario (`handleSubmit`):
+ *    - Previene recargas de página y limpia errores previos.
+ *    - Valida que el campo de correo no esté vacío.
+ *    - Llama a `supabase.auth.resetPasswordForEmail()`:
+ *      - `redirectTo`: Define la URL de callback que procesará el token seguro generado 
+ *        por Supabase Auth (`/api/auth/callback?next=/update-password`).
+ *    - Captura errores específicos o devuelve un mensaje genérico de éxito (ofuscando 
+ *      intencionalmente si el correo existe o no por razones de seguridad/privacidad).
+ * 
+ * @returns {JSX.Element} El formulario interactivo de recuperación de contraseña.
+ */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);

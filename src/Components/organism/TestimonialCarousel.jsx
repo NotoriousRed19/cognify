@@ -94,6 +94,11 @@ function TestimonialCard({ testimonial }) {
   );
 }
 
+/**
+ * TestimonialCarousel
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function TestimonialCarousel() {
   const slides = [];
   for (let i = 0; i < testimonials.length; i += ITEMS_PER_SLIDE) {

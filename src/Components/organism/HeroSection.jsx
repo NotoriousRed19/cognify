@@ -7,6 +7,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * HeroSection
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function HeroSection() {
   return (
     <section

@@ -17,6 +17,11 @@ const playfairDisplay = Playfair_Display({
   display: "swap",
 });
 
+/**
+ * Metadatos globales de la aplicación Cognify.
+ * Establece la configuración base SEO, etiquetas OpenGraph para redes sociales,
+ * configuración de Twitter Cards y plantillas de título para subrutas.
+ */
 export const metadata = {
   metadataBase: new URL('https://cognify.app'), // TODO: Change to real production URL
   title: {
@@ -48,6 +53,32 @@ export const metadata = {
   },
 };
 
+/**
+ * Layout Principal de la Aplicación (RootLayout).
+ * 
+ * Propósito:
+ * Punto de entrada principal en el App Router de Next.js. Este componente 
+ * envuelve absolutamente todas las rutas de la plataforma Cognify.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización de Fuentes: 
+ *    - Carga fuentes optimizadas de Google (`DM_Sans`, `Playfair_Display`) e inyecta
+ *      sus variables CSS (`--font-dm-sans`, `--font-playfair`) al tag `<html>`.
+ * 2. Inyección Global:
+ *    - Importa y aplica la hoja de estilos global (`globals.css`).
+ * 3. Elementos Fijos:
+ *    - `SessionGuard`: Componente lógico sin UI visible (envuelto en `Suspense`)
+ *      que monitoriza cambios asíncronos en la sesión a nivel global.
+ *    - `Header`: Menú de navegación principal inyectado universalmente 
+ *      (su propia lógica interna determina si se oculta en rutas específicas como `/dashboard`).
+ * 4. Renderizado:
+ *    - Provee la estructura base de `html` y `body`, delegando el resto del contenido
+ *      a las páginas específicas que pasen por la propiedad `children`.
+ * 
+ * @param {Object} props - Propiedades inyectadas por Next.js.
+ * @param {React.ReactNode} props.children - Las rutas anidadas que se renderizarán dentro del layout.
+ * @returns {JSX.Element} La estructura envolvente base (DOM raíz) de la aplicación.
+ */
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${dmSans.variable} ${playfairDisplay.variable}`}>

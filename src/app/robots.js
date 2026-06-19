@@ -1,3 +1,8 @@
+/**
+ * robots
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function robots() {
   return {
     rules: {

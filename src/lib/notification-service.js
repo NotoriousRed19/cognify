@@ -56,7 +56,7 @@ class NotificationService {
   /**
    * Notifica al psicólogo cuando recibe una nueva reserva
    */
-  async notifyDoctorNewBooking({ doctorId, doctorEmail, doctorName, patientName, patientContact, patientEmail, appointmentDate, appointmentId, selectedService }) {
+  async notifyDoctorNewBooking({ doctorId, doctorEmail, doctorName, patientName, patientContact, patientEmail, appointmentDate, appointmentId, selectedService, paymentInfo, paymentReceipt }) {
     if (!doctorEmail) return;
 
     const htmlContent = newBookingForDoctorTemplate({
@@ -66,6 +66,7 @@ class NotificationService {
       patientEmail,
       appointmentDate,
       selectedService,
+      paymentInfo,
       dashboardUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`
     });
 
@@ -73,18 +74,30 @@ class NotificationService {
     let errorDetails = null;
 
     try {
-      const info = await transporter.sendMail({
+      const mailOptions = {
         from: `${fromName} <${fromEmail}>`,
         to: doctorEmail,
         subject: `🟢 Nueva reserva: ${patientName}`,
         html: htmlContent,
-      });
+      };
+
+      if (paymentReceipt) {
+        // Extraer la porción base64 pura (después de "data:image/jpeg;base64,")
+        const base64Data = paymentReceipt.split(';base64,').pop();
+        mailOptions.attachments = [
+          {
+            filename: `comprobante_${paymentInfo?.referencia || 'pago'}.jpg`,
+            content: base64Data,
+            encoding: 'base64'
+          }
+        ];
+      }
+
+      const info = await transporter.sendMail(mailOptions);
 
       sendStatus = 'SENT';
-      console.log('[NotificationService] Email enviado al doctor:', info.messageId);
       return { success: true, data: info, error: null };
     } catch (err) {
-      console.error('[NotificationService] Excepción enviando email al doctor:', err);
       errorDetails = err.message;
       return { success: false, error: err.message };
     } finally {
@@ -106,7 +119,6 @@ class NotificationService {
    */
   async notifyPatientBookingStatus({ doctorId, appointmentId, patientEmail, patientName, doctorName, appointmentDate, status }) {
     if (!patientEmail) {
-      console.log(`[NotificationService] El paciente ${patientName} no proporcionó email. No se enviará notificación de ${status}.`);
       
       await this.logNotification({
         doctorId,
@@ -142,10 +154,8 @@ class NotificationService {
       });
 
       sendStatus = 'SENT';
-      console.log('[NotificationService] Email enviado al paciente:', info.messageId);
       return { success: true, data: info, error: null };
     } catch (err) {
-      console.error('[NotificationService] Excepción enviando email al paciente:', err);
       errorDetails = err.message;
       return { success: false, error: err.message };
     } finally {
@@ -186,10 +196,8 @@ class NotificationService {
       });
 
       sendStatus = 'SENT';
-      console.log('[NotificationService] Recordatorio enviado:', info.messageId);
       return { success: true, data: info, error: null };
     } catch (err) {
-      console.error('[NotificationService] Excepción en recordatorio:', err);
       errorDetails = err.message;
       return { success: false, error: err.message };
     } finally {
@@ -206,4 +214,18 @@ class NotificationService {
   }
 }
 
+/**
+ * Instancia global del servicio de notificaciones.
+ * 
+ * Centraliza el envío de correos electrónicos transaccionales y el registro (logging)
+ * de todas las interacciones en la base de datos (tabla "Notification") utilizando
+ * Service Role de Supabase.
+ * 
+ * Casos de uso principales:
+ * - notifyDoctorNewBooking: Avisar al doctor sobre nuevas reservas.
+ * - notifyPatientBookingStatus: Notificar al paciente la aprobación/rechazo de su cita.
+ * - sendReminder: Enviar recordatorios a los pacientes.
+ * 
+ * @type {NotificationService}
+ */
 export const notificationService = new NotificationService();

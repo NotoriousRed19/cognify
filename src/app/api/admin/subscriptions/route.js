@@ -2,6 +2,25 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-guard";
 import { createClient } from "@supabase/supabase-js";
 
+/**
+ * Manejador de la petición PATCH para la ruta API de suscripciones (Administrador).
+ * 
+ * Propósito:
+ * Permite a los administradores modificar el estado de la suscripción de un usuario 
+ * específico y opcionalmente extender sus días de facturación.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica que el usuario actual tenga privilegios de administrador (`requireAdmin`).
+ * 2. Extrae los datos del cuerpo JSON (`user_id`, `plan_status`, `extra_days`).
+ * 3. Valida la presencia de los parámetros obligatorios.
+ * 4. Si se envían `extra_days`, calcula la nueva fecha de facturación (`next_billing_date`).
+ * 5. Utiliza el Service Role de Supabase (`supabaseAdmin`) para eludir RLS, dado que 
+ *    los usuarios (incluso admins autenticados) no pueden editar suscripciones ajenas por seguridad.
+ * 6. Actualiza la tabla `Subscription` y retorna el registro modificado.
+ * 
+ * @param {Request} request - Objeto de la petición entrante con el payload JSON.
+ * @returns {Promise<Response>} Respuesta JSON con la suscripción actualizada o un mensaje de error.
+ */
 export async function PATCH(request) {
   try {
     const { supabase, errorResponse } = await requireAdmin();

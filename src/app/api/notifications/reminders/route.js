@@ -6,6 +6,31 @@ import { notificationService } from "@/lib/notification-service";
 // futuros cambios si se agregan doctores en otros países.
 const SYSTEM_TIMEZONE_OFFSET_HOURS = -4;
 
+/**
+ * Manejador de la petición GET para el Cron Job que envía recordatorios de citas.
+ * 
+ * Propósito:
+ * Ejecutarse automáticamente de forma diaria (configurado vía un servicio externo)
+ * para encontrar todas las citas del día siguiente y enviar recordatorios por correo a los pacientes,
+ * respetando las preferencias de notificación de cada doctor.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica la autorización mediante el header `Authorization: Bearer CRON_SECRET`.
+ * 2. Calcula el rango de tiempo (inicio y fin de "mañana") usando la zona horaria del sistema (UTC-4).
+ * 3. Consulta MASIVA: Obtiene todas las citas con estado "CONFIRMED" agendadas para mañana.
+ * 4. Consulta en paralelo y construye diccionarios (Maps) para:
+ *    - Preferencias de notificación del doctor (`NotificationPreference`).
+ *    - Datos del doctor (`User`).
+ *    - Historial de notificaciones para evitar envíos duplicados (`Notification`).
+ * 5. Filtra las citas asegurándose de que:
+ *    - El doctor tenga habilitados los recordatorios (`reminder_24h`).
+ *    - El correo no se haya enviado ya (`Already sent`).
+ *    - El paciente tenga un correo electrónico registrado.
+ * 6. Ejecuta el envío de correos concurrentemente en lotes (ej. de a 10) usando `notificationService`.
+ * 
+ * @param {Request} request - Petición HTTP que requiere autenticación mediante secreto cron.
+ * @returns {Promise<Response>} Resumen de ejecución con métricas (procesados, enviados, fallidos).
+ */
 export async function GET(request) {
   // Verificación de seguridad para el cron job
   const authHeader = request.headers.get('authorization');

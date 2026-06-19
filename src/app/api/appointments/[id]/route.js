@@ -13,6 +13,27 @@ const UpdateAppointmentSchema = z.object({
   status: z.enum(["PENDING_APPROVAL", "CONFIRMED", "REJECTED", "CANCELLED"]).optional()
 });
 
+/**
+ * Manejador de la petición PATCH para actualizar una cita médica específica.
+ * 
+ * Propósito:
+ * Permite actualizar los detalles de una cita o gestionar el flujo de aprobación
+ * de reservas creadas por pacientes desde el portal público.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica autenticación del profesional (`requireAuth`).
+ * 2. Valida el formato del UUID de la cita y el esquema del body con Zod.
+ * 3. Si se aprueba una reserva pública (`CONFIRMED`), invoca un RPC (`rpc_approve_appointment`) 
+ *    para crear el paciente si no existe y aprueba la cita atómicamente, luego envía notificación por correo.
+ * 4. Si se rechaza (`REJECTED`), hace un soft-delete de la cita y envía notificación de rechazo.
+ * 5. Bloquea cambios manuales directos al campo `status` fuera de estos flujos.
+ * 6. Valida que las transiciones de `estado` (ej. de AGENDADA a COMPLETADA) sean lógicas.
+ * 7. Ejecuta la actualización regular si no es un flujo de aprobación/rechazo.
+ * 
+ * @param {Request} request - Objeto de la petición con los campos a actualizar.
+ * @param {Object} context - Contexto que contiene los parámetros de la URL (`id`).
+ * @returns {Promise<Response>} Respuesta JSON con el resultado de la operación.
+ */
 export async function PATCH(request, { params }) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
@@ -167,6 +188,23 @@ export async function PATCH(request, { params }) {
   }
 }
 
+/**
+ * Manejador de la petición DELETE para cancelar una cita médica.
+ * 
+ * Propósito:
+ * Ejecutar un "soft delete" sobre una cita, cambiándole el estado a CANCELADA
+ * en lugar de eliminar el registro físico de la base de datos, preservando el historial.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica autenticación del profesional (`requireAuth`).
+ * 2. Valida que el ID proporcionado sea un UUID válido.
+ * 3. Actualiza el registro en la base de datos fijando `estado: "CANCELADA"` y `status: "REJECTED"`.
+ * 4. Verifica que la política RLS haya permitido la actualización (el doctor es dueño de la cita).
+ * 
+ * @param {Request} request - Objeto de la petición DELETE.
+ * @param {Object} context - Contexto que contiene los parámetros de la URL (`id`).
+ * @returns {Promise<Response>} Respuesta JSON confirmando la cancelación o error de acceso.
+ */
 export async function DELETE(request, { params }) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();

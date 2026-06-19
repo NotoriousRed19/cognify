@@ -9,6 +9,29 @@ import GoogleIcon from "@/Components/atoms/GoogleIcon";
 
 const supabase = createClient();
 
+/**
+ * Página de Inicio de Sesión (LoginPage).
+ * 
+ * Propósito:
+ * Proveer la interfaz principal para que los profesionales médicos autentiquen 
+ * su acceso a la plataforma Cognify. Soporta inicio de sesión con email/contraseña
+ * y OAuth (Google).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización: Instancia `supabase` cliente y recupera parámetros de URL (`error`) 
+ *    por si hay fallos provenientes de redirecciones (ej. validación de email).
+ * 2. OAuth (Google - `handleGoogleLogin`):
+ *    - Deja una marca (`cognify-active-session`) en `sessionStorage` para sincronizar estados.
+ *    - Inicia el flujo OAuth redirigiendo a `/api/auth/callback?action=login`.
+ * 3. Email/Password (`handleSubmit`):
+ *    - Valida campos locales y envía solicitud a Supabase Auth.
+ *    - Intercepta errores comunes (credenciales inválidas, email no confirmado) traduciéndolos al español.
+ *    - Al ser exitoso, marca la sesión y redirige a `/dashboard`.
+ * 4. UX/UI: Incluye validación de estado de carga, toggle para ver contraseña (`showPassword`) 
+ *    y enlaces a recuperación/registro.
+ * 
+ * @returns {JSX.Element} El formulario interactivo de inicio de sesión.
+ */
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -5,6 +5,30 @@ import { Search, ChevronRight, Stethoscope, ArrowRight, Loader2, Brain } from "l
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 
+/**
+ * Página de Búsqueda de Profesionales (BookSearchPage).
+ * 
+ * Propósito:
+ * Proveer un buscador público donde los pacientes pueden encontrar a su médico o
+ * especialista por nombre, correo o slug, para posteriormente acceder a su perfil
+ * y agendar una cita.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Gestión de Estado: Maneja el input de búsqueda (`query`), estado de carga (`loading`)
+ *    y los resultados obtenidos (`results`).
+ * 2. Optimización de Búsqueda: Utiliza `useDebounce` (500ms) sobre el `query` para evitar
+ *    saturar la base de datos con peticiones por cada tecla pulsada.
+ * 3. Fetch de Datos (`useEffect`): 
+ *    - Se dispara automáticamente cuando el valor "debounced" cambia.
+ *    - Consulta el endpoint interno `/api/doctors/search?q=...`.
+ *    - Extrae el arreglo de médicos y actualiza el estado de la UI.
+ * 4. Renderizado Condicional:
+ *    - Muestra un spinner (`Loader2`) mientras la petición HTTP está en vuelo.
+ *    - Renderiza una lista cliqueable (redirección a `/book/[slug]`) si hay resultados.
+ *    - Muestra estados vacíos (empty states) si no hay resultados o si el input está vacío.
+ * 
+ * @returns {JSX.Element} El componente interactivo de búsqueda de doctores.
+ */
 export default function BookSearchPage() {
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebounce(query, 500);

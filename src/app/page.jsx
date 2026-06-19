@@ -4,6 +4,23 @@ import TestimonialCarousel from "@/Components/organism/TestimonialCarousel";
 import PricingSection from "@/Components/organism/PricingSection";
 import Footer from "@/Components/organism/Footer";
 
+/**
+ * Página de Inicio / Landing Page (Home).
+ * 
+ * Propósito:
+ * Renderizar la página de inicio pública de la plataforma Cognify. Está optimizada
+ * para marketing, conversiones y SEO, presentando los beneficios principales del software.
+ * 
+ * Estructura de Componentes:
+ * 1. `HeroSection`: Sección principal de impacto visual superior.
+ * 2. `FeaturesSection`: Desglose de características del sistema (expedientes, calendario, etc.).
+ * 3. Sección "Testimonios": Carrusel interactivo (`TestimonialCarousel`) con pruebas sociales,
+ *    decorado con blobs difuminados (glassmorphism) en el fondo.
+ * 4. `PricingSection`: Planes de suscripción y precios.
+ * 5. `Footer`: Pie de página público con enlaces estáticos y legales.
+ * 
+ * @returns {JSX.Element} La vista principal (landing page).
+ */
 export default function Home() {
   return (
     <>

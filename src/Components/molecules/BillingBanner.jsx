@@ -1,6 +1,11 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
+/**
+ * BillingBanner
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function BillingBanner({ subscription }) {
   if (!subscription || subscription.plan_status !== 'ACTIVE') return null;
   if (!subscription.next_billing_date) return null;

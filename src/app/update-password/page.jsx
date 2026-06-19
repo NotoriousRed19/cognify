@@ -8,6 +8,33 @@ import { createClient } from "@/utils/supabase/client";
 
 const supabase = createClient();
 
+/**
+ * Página de Actualización de Contraseña (UpdatePasswordPage).
+ * 
+ * Propósito:
+ * Proveer la interfaz para que los usuarios cambien su contraseña de acceso.
+ * Esta página suele ser accedida a través de un enlace mágico (magic link) 
+ * enviado por correo tras solicitar la recuperación desde `/forgot-password`.
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Validación de Sesión (`checkSession` en `useEffect`):
+ *    - Se ejecuta al montar el componente.
+ *    - Verifica de forma asíncrona si existe una sesión activa (`supabase.auth.getSession`).
+ *    - El flujo estándar de Supabase establece la sesión automáticamente a partir 
+ *      del token en el enlace mágico antes de redirigir a esta página.
+ *    - Si no hay sesión (enlace expirado o acceso manual incorrecto), bloquea el 
+ *      envío de formulario y muestra un mensaje de error.
+ * 2. Validación de Formulario (`handleSubmit`):
+ *    - Verifica que ambos campos (contraseña y confirmación) estén llenos, coincidan 
+ *      y tengan una longitud mínima de 6 caracteres.
+ * 3. Actualización Segura (`supabase.auth.updateUser`):
+ *    - Solicita a Supabase el cambio de contraseña vinculado a la sesión actual activa.
+ *    - Si es exitoso, informa al usuario y lo redirige automáticamente a `/dashboard` 
+ *      después de 2 segundos.
+ * 4. UX/UI: Alternancia de visibilidad de contraseña y manejo de estados (cargando/error).
+ * 
+ * @returns {JSX.Element} El formulario de actualización de contraseña segura.
+ */
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

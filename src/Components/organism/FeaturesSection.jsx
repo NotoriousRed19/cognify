@@ -46,6 +46,11 @@ const features = [
   },
 ];
 
+/**
+ * FeaturesSection
+ * 
+ * @returns {JSX.Element} El componente renderizado.
+ */
 export default function FeaturesSection() {
   return (
     <section id="Funciones" className="relative py-24 bg-background overflow-hidden">

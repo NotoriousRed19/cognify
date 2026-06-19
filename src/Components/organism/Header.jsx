@@ -7,6 +7,20 @@ import { createClient } from "@/utils/supabase/client";
 import NavHeader from "@/Components/molecules/NavHeader";
 import { Brain, Menu, X } from "lucide-react";
 
+/**
+ * Componente de navegación principal (Header).
+ * 
+ * Este encabezado se muestra en todas las páginas públicas del sitio (landing).
+ * 
+ * Se encarga de:
+ * 1. Comprobar dinámicamente el estado de autenticación del usuario (Supabase).
+ * 2. Mostrar opciones de inicio de sesión/registro si el usuario no está autenticado.
+ * 3. Mostrar accesos al Dashboard (o Admin, según rol/correo) si ya inició sesión.
+ * 4. Ocultarse automáticamente en rutas de Auth, Dashboard o Administración.
+ * 5. Proveer un menú tipo "hamburguesa" responsivo para pantallas móviles.
+ * 
+ * @returns {JSX.Element | null} La interfaz del encabezado, o null si la ruta está excluida.
+ */
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);

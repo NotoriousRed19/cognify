@@ -62,6 +62,34 @@ const TimeSelect12h = ({ name, value, onChange }) => {
   );
 };
 
+/**
+ * Componente del Calendario Interactivo (CalendarPage).
+ * 
+ * Propósito:
+ * Permite al profesional gestionar su agenda (crear, ver, editar, confirmar o cancelar citas).
+ * Centraliza la relación entre horarios, pacientes (si los hay) y estado clínico 
+ * (agendada, completada, pendiente de revisión).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización: Utiliza `useState` para citas, pacientes, vista del calendario
+ *    ("month", "week", "day") y control del modal (crear, editar, revisar agenda diaria).
+ * 2. Componente Secundario (`TimeSelect12h`): Helper interno que convierte inputs de 
+ *    12 horas (AM/PM) en formato 24h para facilitar el guardado en base de datos.
+ * 3. Obtención de datos (`fetchAppointments`, `fetchPatients`): Llama a las APIs 
+ *    al montar el componente para poblar el calendario y el selector de pacientes en el formulario.
+ * 4. Gestión del Modal (`isModalOpen`, `modalMode`): 
+ *    - `agenda`: Muestra la lista de citas de un día específico.
+ *    - `create`/`edit`: Formulario controlado (`formData`) para enviar POST/PATCH a la API.
+ *    - `review`: Vista especial para aprobar o rechazar reservas hechas por pacientes desde su link público.
+ * 5. Acciones Rápidas:
+ *    - `handleToggleCompleted`: Cambia el estado de una cita a COMPLETADA rápidamente.
+ *    - `handleDeleteAppointment`: Pide confirmación y envía DELETE a la API.
+ * 6. Generador de Cuadrícula (`renderCells`): Iterador de fechas (usando `date-fns`) que 
+ *    pinta el grid correspondiente a la vista actual, cruzando las fechas iteradas 
+ *    con el listado de `appointments` para inyectar los eventos visuales.
+ * 
+ * @returns {JSX.Element} La vista completa del calendario interactivo.
+ */
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);

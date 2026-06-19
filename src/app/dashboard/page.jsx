@@ -33,6 +33,32 @@ function KpiSkeleton() {
   );
 }
 
+/**
+ * Componente principal del Dashboard (DashboardPage).
+ * 
+ * Propósito:
+ * Actuar como la pantalla de inicio ("Home") del profesional, proporcionando 
+ * un resumen visual e interactivo del estado de su práctica (KPIs, gráficos, próximas citas).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización de estados: Maneja estadísticas (`stats`), estado de carga (`isLoading`), 
+ *    y marcas de tiempo de actualización (`lastUpdated`).
+ * 2. Manejo de errores de autorización: Si la URL contiene `?error=unauthorized` (inyectado por 
+ *    el guardián del Layout), muestra un banner temporal indicando acceso denegado a rutas admin.
+ * 3. Obtención de datos (`fetchStats`): Llama a `/api/dashboard/stats` para recuperar los KPIs
+ *    consolidados generados en el servidor.
+ * 4. Refresco en tiempo real (Polling): Implementa un `setInterval` que actualiza los datos 
+ *    silenciosamente cada 30 segundos para mantener el panel siempre actualizado.
+ * 5. Alertas proactivas: Si hay reservas pendientes de aprobación (`pendingApprovalCount > 0`), 
+ *    renderiza un banner destacado impulsando a la acción.
+ * 6. Renderizado Condicional:
+ *    - Mientras carga, muestra un skeleton de UI animado (`KpiSkeleton`).
+ *    - Renderiza tarjetas KPI (Total pacientes, Citas hoy, Retención).
+ *    - Renderiza gráficos importados dinámicamente (Dynamic SSR) para optimización.
+ *    - Lista de forma truncada las citas más próximas.
+ * 
+ * @returns {JSX.Element} El panel de control principal.
+ */
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

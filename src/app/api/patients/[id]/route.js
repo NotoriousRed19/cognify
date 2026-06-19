@@ -3,6 +3,28 @@ import { requireAuth } from "@/lib/auth-guard";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Manejador de la petición GET para obtener el expediente detallado de un paciente.
+ * 
+ * Propósito:
+ * Consultar y devolver la información personal del paciente, junto con su historial
+ * clínico (sesiones de terapia) y su historial de reservas (citas), para la vista
+ * de expediente en el dashboard del doctor.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica la autenticación y permisos del usuario (`requireAuth`).
+ * 2. Valida que el parámetro `id` de la ruta cumpla con el formato UUID.
+ * 3. Ejecuta de forma paralela (Promise.all) tres consultas a Supabase:
+ *    - Obtener datos demográficos en `Patient`.
+ *    - Obtener el historial clínico en `TherapySession` (ordenado cronológicamente).
+ *    - Obtener el historial de reservas en `Appointment`.
+ *    (La seguridad RLS asegura que el doctor solo recupere lo suyo).
+ * 4. Ensambla y retorna un objeto JSON consolidado.
+ * 
+ * @param {Request} request - Petición HTTP entrante.
+ * @param {Object} context - Objeto con el parámetro de la ruta (`id` del paciente).
+ * @returns {Promise<Response>} JSON con el objeto `patient` completo o un error 404/500.
+ */
 export async function GET(request, { params }) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
@@ -43,6 +65,24 @@ export async function GET(request, { params }) {
   }
 }
 
+/**
+ * Manejador de la petición PATCH para actualizar datos demográficos de un paciente.
+ * 
+ * Propósito:
+ * Permitir al doctor modificar la información de perfil de un paciente desde su expediente.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica la autenticación (`requireAuth`) y el formato UUID del `id`.
+ * 2. Extrae el JSON de la petición y filtra estrictamente solo los campos permitidos.
+ * 3. Si se proporciona `fecha_nacimiento`, valida su validez y la convierte a ISO.
+ * 4. Si se intenta cambiar el `email`, verifica que no exista ya otro paciente del mismo 
+ *    doctor con ese correo exacto (para evitar duplicidad no deseada).
+ * 5. Ejecuta el `update` en la tabla `Patient` y devuelve la fila modificada.
+ * 
+ * @param {Request} request - Petición con el payload parcial de campos a actualizar.
+ * @param {Object} context - Objeto con el parámetro `id`.
+ * @returns {Promise<Response>} JSON con el paciente actualizado o error (ej. 409 si correo en uso).
+ */
 export async function PATCH(request, { params }) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
@@ -105,6 +145,22 @@ export async function PATCH(request, { params }) {
   }
 }
 
+/**
+ * Manejador de la petición DELETE para eliminar un paciente.
+ * 
+ * Propósito:
+ * Borrar de forma permanente a un paciente del listado del doctor.
+ * (La base de datos se encarga de eliminar en cascada citas y sesiones asociadas).
+ * 
+ * Flujo de ejecución:
+ * 1. Autentica al usuario.
+ * 2. Valida el UUID del parámetro.
+ * 3. Ejecuta el borrado. RLS garantiza que el doctor solo borra pacientes propios.
+ * 
+ * @param {Request} request - Petición HTTP DELETE.
+ * @param {Object} context - Objeto con el parámetro `id`.
+ * @returns {Promise<Response>} Respuesta de éxito (200) o error 404/500.
+ */
 export async function DELETE(request, { params }) {
   try {
     const { user, supabase, errorResponse } = await requireAuth();

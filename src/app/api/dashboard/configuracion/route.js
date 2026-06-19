@@ -23,6 +23,23 @@ const ConfigSchema = z.object({
   custom_reminder_message: z.string().max(500).optional().nullable().or(z.literal(""))
 });
 
+/**
+ * Manejador de la petición GET para obtener la configuración completa del usuario.
+ * 
+ * Propósito:
+ * Consultar y devolver todas las preferencias, configuración de portal público, 
+ * disponibilidad de horarios y ajustes de notificaciones del profesional.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica la sesión y autenticación del usuario (`requireAuth`).
+ * 2. Consulta la tabla `User` para extraer configuración pública (slug, pagos, precios).
+ * 3. Consulta la tabla `Availability` para listar los bloques horarios del doctor.
+ * 4. Consulta la tabla `NotificationPreference` para obtener las reglas de recordatorios.
+ * 5. Empaqueta los resultados en un único JSON consolidado.
+ * 
+ * @param {Request} request - Petición entrante HTTP GET.
+ * @returns {Promise<Response>} JSON con `user`, `availability` y `notifications`, o error 500.
+ */
 export async function GET(request) {
   const { user, supabase, errorResponse } = await requireAuth();
   if (errorResponse) return errorResponse;
@@ -62,6 +79,26 @@ export async function GET(request) {
   return NextResponse.json({ user: userData, availability, notifications: notifPrefs });
 }
 
+/**
+ * Manejador de la petición POST para guardar cambios en la configuración del usuario.
+ * 
+ * Propósito:
+ * Actualizar las preferencias del perfil, el slug público, los bloques de disponibilidad
+ * y la configuración de recordatorios.
+ * 
+ * Flujo de ejecución:
+ * 1. Autentica al usuario (`requireAuth`).
+ * 2. Valida la estructura del payload JSON mediante Zod (`ConfigSchema`).
+ * 3. Valida la unicidad del `slug` verificando que ningún otro usuario lo posea. 
+ *    Si está en uso, retorna un error 400 con sugerencias alternativas.
+ * 4. Actualiza los campos principales en la tabla `User` (slug, reservas, pagos, precios).
+ * 5. Actualiza los horarios usando la función RPC `rpc_update_availability`, la cual
+ *    elimina los bloques anteriores y crea los nuevos de forma atómica.
+ * 6. Inserta o actualiza (`upsert`) las reglas en `NotificationPreference`.
+ * 
+ * @param {Request} request - Petición con el JSON consolidado de configuraciones.
+ * @returns {Promise<Response>} Respuesta de éxito o error detallado de validación/conflictos.
+ */
 export async function POST(request) {
   const { user, supabase, errorResponse } = await requireAuth();
   if (errorResponse) return errorResponse;

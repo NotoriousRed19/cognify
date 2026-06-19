@@ -31,34 +31,34 @@ Eliminar la fricción administrativa en la consulta clínica, permitiendo a los 
 
 ## ✨ Funcionalidades Principales
 
-| Módulo | Descripción |
-|---|---|
-| **Dashboard** | Panel con KPIs en tiempo real: pacientes totales, citas del día, sesiones finalizadas y gráficos de actividad semanal. |
-| **Gestión de Pacientes** | Directorio digital (CRUD) con información de contacto, antecedentes y datos demográficos. |
-| **Calendario Interactivo** | Sistema de agendamiento vinculado a los pacientes registrados. |
-| **Notas Clínicas** | Editor de texto enriquecido para redactar notas de sesión, observaciones y progreso. |
-| **Sistema de Booking** | Página pública con URL personalizada (`/book/slug`) para que los pacientes reserven citas directamente. |
-| **Notificaciones por Email** | Correos automáticos al doctor (nueva reserva) y al paciente (aprobación/rechazo de cita). |
-| **Recordatorios Automáticos** | Cron Job diario que envía recordatorios 24 horas antes de cada cita confirmada. |
-| **Panel de Administración** | Gestión de usuarios, roles y configuración global del sistema. |
+| Módulo                        | Descripción                                                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Dashboard**                 | Panel con KPIs en tiempo real: pacientes totales, citas del día, sesiones finalizadas y gráficos de actividad semanal. |
+| **Gestión de Pacientes**      | Directorio digital (CRUD) con información de contacto, antecedentes y datos demográficos.                              |
+| **Calendario Interactivo**    | Sistema de agendamiento vinculado a los pacientes registrados.                                                         |
+| **Notas Clínicas**            | Editor de texto enriquecido para redactar notas de sesión, observaciones y progreso.                                   |
+| **Sistema de Booking**        | Página pública con URL personalizada (`/book/slug`) para que los pacientes reserven citas directamente.                |
+| **Notificaciones por Email**  | Correos automáticos al doctor (nueva reserva) y al paciente (aprobación/rechazo de cita).                              |
+| **Recordatorios Automáticos** | Cron Job diario que envía recordatorios 24 horas antes de cada cita confirmada.                                        |
+| **Panel de Administración**   | Gestión de usuarios, roles y configuración global del sistema.                                                         |
 
 ---
 
 ## 🏗️ Stack Tecnológico
 
-| Capa | Tecnología |
-|---|---|
-| **Framework** | Next.js 16 (App Router, React 19) |
-| **Estilos** | Tailwind CSS 4 (PostCSS) |
-| **Base de Datos** | Supabase (PostgreSQL + Row Level Security) |
+| Capa              | Tecnología                                        |
+| ----------------- | ------------------------------------------------- |
+| **Framework**     | Next.js 16 (App Router, React 19)                 |
+| **Estilos**       | Tailwind CSS 4 (PostCSS)                          |
+| **Base de Datos** | Supabase (PostgreSQL + Row Level Security)        |
 | **Autenticación** | Supabase Auth (OAuth, Magic Link, Email/Password) |
-| **Email** | Nodemailer (Gmail SMTP) |
-| **Gráficos** | Recharts |
-| **Iconografía** | Lucide React |
-| **Fechas** | date-fns + date-fns-tz |
-| **Validación** | Zod |
-| **Hosting** | Vercel (Serverless) |
-| **Cron Jobs** | Vercel Cron |
+| **Email**         | Nodemailer (Gmail SMTP)                           |
+| **Gráficos**      | Recharts                                          |
+| **Iconografía**   | Lucide React                                      |
+| **Fechas**        | date-fns + date-fns-tz                            |
+| **Validación**    | Zod                                               |
+| **Hosting**       | Vercel (Serverless)                               |
+| **Cron Jobs**     | Vercel Cron                                       |
 
 ---
 
@@ -66,7 +66,7 @@ Eliminar la fricción administrativa en la consulta clínica, permitiendo a los 
 
 ### Prerrequisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - npm o yarn
 - Cuenta en [Supabase](https://supabase.com)
 - Cuenta de Gmail con [Contraseña de Aplicación](https://myaccount.google.com/apppasswords)
@@ -143,18 +143,18 @@ Cognify implementa un modelo de seguridad **Zero Trust** con múltiples capas:
 
 ## 📧 Sistema de Notificaciones
 
-| Evento | Destinatario | Descripción |
-|---|---|---|
-| Nueva reserva | Doctor | Correo inmediato cuando un paciente agenda una cita. |
-| Cita aprobada | Paciente | Confirmación cuando el doctor acepta la reserva. |
-| Cita rechazada | Paciente | Notificación cuando el doctor rechaza la reserva. |
-| Recordatorio 24h | Paciente | Correo automático diario (Cron Job) para citas de mañana. |
+| Evento           | Destinatario | Descripción                                               |
+| ---------------- | ------------ | --------------------------------------------------------- |
+| Nueva reserva    | Doctor       | Correo inmediato cuando un paciente agenda una cita.      |
+| Cita aprobada    | Paciente     | Confirmación cuando el doctor acepta la reserva.          |
+| Cita rechazada   | Paciente     | Notificación cuando el doctor rechaza la reserva.         |
+| Recordatorio 24h | Paciente     | Correo automático diario (Cron Job) para citas de mañana. |
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está protegido bajo la Licencia MIT. Consulta el archivo [LICENSE.md](LICENSE.md) para más detalles.
+Este proyecto está protegido bajo la Licencia GPL-3.0. Consulta el archivo [LICENSE.md](LICENSE.md) para más detalles.
 
 ---
 

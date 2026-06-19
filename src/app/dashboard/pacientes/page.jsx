@@ -113,6 +113,37 @@ function PatientCard({ patient, index, onDelete }) {
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
+/**
+ * Componente del Archivo de Pacientes (PacientesPage).
+ * 
+ * Propósito:
+ * Mostrar el listado completo de pacientes registrados por el profesional, 
+ * con capacidades de búsqueda en tiempo real, creación de nuevos expedientes 
+ * y eliminación (junto con sus registros asociados).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización (`fetchPatients`): Al cargar la vista, llama a `/api/patients` 
+ *    para recuperar el listado desde la tabla `Patient`.
+ * 2. Visualización y Búsqueda:
+ *    - La lista (`filteredPatients`) se renderiza dinámicamente según el término de 
+ *      búsqueda (`searchQuery`), filtrando por nombre, identificación o celular.
+ *    - Implementa estados vacíos ("Aún no hay pacientes" o "Ningún paciente coincide").
+ * 3. Componentes Secundarios:
+ *    - `getInitials` y `AVATAR_COLORS`: Helpers para generar avatares visualmente 
+ *      atractivos en ausencia de foto de perfil.
+ *    - `PatientCard`: Componente individual que encapsula los datos básicos de un paciente 
+ *      y provee navegación a la ficha detallada (`/dashboard/pacientes/[id]`).
+ * 4. Creación de Expediente:
+ *    - Al presionar "Nuevo Expediente", se abre un Modal (slide lateral) con un 
+ *      formulario controlado (`formData`).
+ *    - `handleSubmit` valida y envía un POST a la API para crear el registro, 
+ *      luego recarga la lista.
+ * 5. Eliminación:
+ *    - `handleDeletePatient` emite un DELETE. Pide confirmación previa advirtiendo 
+ *      que la acción tiene un borrado en cascada (notas y citas vinculadas).
+ * 
+ * @returns {JSX.Element} La vista del archivo de pacientes.
+ */
 export default function PacientesPage() {
   const [patients, setPatients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,8 +1,26 @@
+/**
+ * Metadatos para la ruta de Términos y Condiciones.
+ * Optimización SEO y configuración de título/descripción para la página `/terms`.
+ */
 export const metadata = {
   title: "Términos y Condiciones | Cognify",
   description: "Términos y Condiciones de uso de Cognify.",
 };
 
+/**
+ * Página de Términos y Condiciones (TermsPage).
+ * 
+ * Propósito:
+ * Mostrar el acuerdo legal base bajo el cual los usuarios (pacientes y profesionales) 
+ * pueden utilizar la plataforma Cognify. Aborda responsabilidades, uso del servicio, 
+ * y los límites de la relación profesional-paciente.
+ * 
+ * Elementos clave:
+ * - Estructura estática simple basada en títulos (h2) y párrafos.
+ * - Diseño inmersivo coherente con el resto de la plataforma (backdrop-blur, bg-card).
+ * 
+ * @returns {JSX.Element} La vista estática con el texto de términos y condiciones.
+ */
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-gradient-soft pt-32 pb-20">

@@ -1,10 +1,27 @@
 import { Mail, Brain, MessageSquareHeart } from "lucide-react";
 
+/**
+ * Metadatos para la ruta de contacto.
+ * Optimización SEO y configuración de título/descripción para la página `/contact`.
+ */
 export const metadata = {
   title: "Contacto | Cognify",
   description: "Ponte en contacto con el equipo de Cognify.",
 };
 
+/**
+ * Página de Contacto (ContactPage).
+ * 
+ * Propósito:
+ * Proveer información pública de soporte y contacto técnico. Presenta el 
+ * correo electrónico oficial y muestra créditos de desarrollo (SantanaDev).
+ * 
+ * Diseño Visual:
+ * - Tarjeta central (`bg-card`) con efecto de cristal (backdrop-blur).
+ * - Elementos decorativos (blobs desenfocados) con colores de la marca en hover.
+ * 
+ * @returns {JSX.Element} La vista estática de información de contacto.
+ */
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gradient-soft pt-32 pb-20 flex items-center justify-center">

@@ -5,9 +5,20 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 /**
- * SessionGuard — invalida sesiones huérfanas de pestañas anteriores (Supabase version).
- * Si la URL tiene ?session_init=true (puesto por el callback de auth tras confirmación
- * de email), se activa la sesión en sessionStorage en vez de cerrarla.
+ * Componente proveedor de seguridad de sesión (SessionGuard).
+ * 
+ * Se encarga de invalidar "sesiones huérfanas" provenientes de otras pestañas o 
+ * navegadores cerrados incorrectamente. Esto asegura que cada nueva pestaña requiera
+ * reautenticación a menos que provenga directamente de un flujo de inicio de sesión.
+ * 
+ * Lógica principal:
+ * 1. Verifica si existe una sesión activa en Supabase.
+ * 2. Si la URL contiene el parámetro `?session_init=true` (ej. callback tras login), 
+ *    establece una marca en el `sessionStorage` para mantener la sesión activa en esa pestaña.
+ * 3. Si existe sesión en Supabase pero NO está la marca en `sessionStorage`, 
+ *    fuerza un cierre de sesión (`signOut()`).
+ * 
+ * @returns {null} Este componente no renderiza ninguna interfaz visible.
  */
 export default function SessionGuard() {
   const supabase = createClient();

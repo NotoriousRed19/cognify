@@ -9,6 +9,31 @@ import GoogleIcon from "@/Components/atoms/GoogleIcon";
 
 const supabase = createClient();
 
+/**
+ * Página de Registro (RegisterPage).
+ * 
+ * Propósito:
+ * Proveer la interfaz para que nuevos profesionales médicos creen una cuenta 
+ * en Cognify. Permite el registro mediante correo/contraseña o proveedor OAuth (Google).
+ * 
+ * Flujo de ejecución y lógica:
+ * 1. Inicialización: Recupera parámetros de URL (`error`) para manejar alertas 
+ *    (ej. cuenta ya existente detectada en un flujo de redirección).
+ * 2. OAuth (Google - `handleGoogleLogin`):
+ *    - Inicia sesión OAuth apuntando al callback de registro (`/api/auth/callback?action=register`).
+ * 3. Email/Password (`handleSubmit`):
+ *    - Valida que nombre, correo y contraseña cumplan los requisitos.
+ *    - Llama a `supabase.auth.signUp()` pasando el nombre completo (`full_name`) en los metadatos de usuario (`data`).
+ *    - Maneja la respuesta de Supabase:
+ *      - Si hay error de "already registered", muestra un modal amigable.
+ *      - Si Supabase auto-inicia sesión, redirige al dashboard.
+ *      - Si Supabase requiere confirmación de correo (por configuración), alerta al usuario.
+ * 4. UX/UI Adicional:
+ *    - Modal dinámico de error (`errorModalVisible`) para gestionar cuentas duplicadas 
+ *      sugiriendo redirigirse al inicio de sesión.
+ * 
+ * @returns {JSX.Element} El formulario de creación de cuenta y su modal de error asociado.
+ */
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

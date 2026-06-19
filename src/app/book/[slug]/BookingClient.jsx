@@ -18,6 +18,20 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Componente cliente para el flujo de reservas (BookingClient).
+ * 
+ * Gestiona un formulario interactivo de múltiples pasos para agendar citas:
+ * - Paso 1: Selección de fecha y hora disponibles (consultadas vía API).
+ * - Paso 2: Ingreso de datos personales del paciente (validando duplicados).
+ * - Paso 3: Selección de servicios médicos y visualización de precios.
+ * - Paso 4: Carga del comprobante de pago (con compresión local) y confirmación.
+ * - Paso 5: Pantalla de éxito tras el envío.
+ * 
+ * @param {Object} props - Propiedades del componente.
+ * @param {Object} props.doctor - Información del doctor (slug, nombre, instrucciones_pago).
+ * @returns {JSX.Element} El componente del flujo de reservas.
+ */
 export default function BookingClient({ doctor }) {
   const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -37,6 +51,16 @@ export default function BookingClient({ doctor }) {
     fecha_nacimiento: "",
     sexo: ""
   });
+
+  const [paymentData, setPaymentData] = useState({
+    titular: "",
+    apellido: "",
+    ci: "",
+    telefono: "",
+    referencia: ""
+  });
+  const [paymentReceipt, setPaymentReceipt] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -118,6 +142,12 @@ export default function BookingClient({ doctor }) {
     }
 
     if (step === 4) {
+      // Validaciones del paso 4
+      if (!paymentData.titular || !paymentData.apellido || !paymentData.ci || !paymentData.telefono || !paymentData.referencia || !paymentReceipt) {
+        setError("Por favor completa todos los datos de pago y adjunta el comprobante.");
+        return;
+      }
+
       setSubmitting(true);
       setError(null);
       try {
@@ -128,7 +158,9 @@ export default function BookingClient({ doctor }) {
             date: format(selectedDate, "yyyy-MM-dd"),
             time: selectedTime,
             service: selectedService,
-            ...formData
+            ...formData,
+            paymentInfo: paymentData,
+            paymentReceipt: paymentReceipt
           })
         });
 
@@ -144,6 +176,58 @@ export default function BookingClient({ doctor }) {
         setSubmitting(false);
       }
     }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.match('image/(jpeg|png)')) {
+      setError("Solo se permiten imágenes JPG y PNG.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        } else if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Compress to 60% quality JPEG
+        setPaymentReceipt(dataUrl);
+        setUploadingImage(false);
+      };
+      img.onerror = () => {
+        setError("Error procesando la imagen.");
+        setUploadingImage(false);
+      };
+    };
+    reader.onerror = () => {
+      setError("Error leyendo la imagen.");
+      setUploadingImage(false);
+    };
   };
 
   const handleBack = () => {
@@ -543,10 +627,70 @@ export default function BookingClient({ doctor }) {
                   {doctor.payment_instructions || "El especialista no ha proporcionado instrucciones de pago. Puedes enviar la solicitud y se comunicarán contigo."}
                 </div>
 
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-2.5">
+                      <label className="text-sm font-semibold text-foreground">Titular de la cuenta</label>
+                      <input 
+                        required type="text"
+                        className="w-full p-4 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                        value={paymentData.titular} onChange={e => setPaymentData({...paymentData, titular: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2.5">
+                      <label className="text-sm font-semibold text-foreground">Apellido del titular</label>
+                      <input 
+                        required type="text"
+                        className="w-full p-4 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                        value={paymentData.apellido} onChange={e => setPaymentData({...paymentData, apellido: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-2.5">
+                      <label className="text-sm font-semibold text-foreground">C.I. del titular</label>
+                      <input 
+                        required type="text"
+                        className="w-full p-4 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                        value={paymentData.ci} onChange={e => setPaymentData({...paymentData, ci: e.target.value.replace(/[^0-9]/g, "")})}
+                      />
+                    </div>
+                    <div className="space-y-2.5">
+                      <label className="text-sm font-semibold text-foreground">Teléfono del titular</label>
+                      <input 
+                        required type="tel"
+                        className="w-full p-4 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                        value={paymentData.telefono} onChange={e => setPaymentData({...paymentData, telefono: e.target.value.replace(/[^0-9+]/g, "")})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <label className="text-sm font-semibold text-foreground">Número de referencia</label>
+                    <input 
+                      required type="text"
+                      className="w-full p-4 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/50"
+                      value={paymentData.referencia} onChange={e => setPaymentData({...paymentData, referencia: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <label className="text-sm font-semibold text-foreground">Comprobante de Pago (JPG o PNG)</label>
+                    <input 
+                      required type="file" accept="image/jpeg, image/png"
+                      onChange={handleImageUpload}
+                      className="w-full p-3 bg-muted/40 border border-border/80 rounded-xl focus:bg-card focus:outline-none transition-all text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 cursor-pointer"
+                    />
+                    {uploadingImage && <p className="text-sm text-primary flex items-center gap-2 mt-2"><Loader2 className="w-4 h-4 animate-spin" /> Procesando imagen...</p>}
+                    {paymentReceipt && !uploadingImage && <p className="text-sm text-green-600 font-medium mt-2">✓ Comprobante adjuntado listo para enviar</p>}
+                  </div>
+                </div>
+
                 <div className="bg-primary/5 border border-primary/20 p-5 rounded-2xl flex items-start gap-4">
                   <AlertCircle className="w-6 h-6 text-primary shrink-0 mt-0.5" />
                   <p className="text-[15px] text-primary/90 leading-relaxed font-medium">
-                    Al confirmar, tu solicitud será enviada. Una vez el especialista verifique el pago, aprobará la cita.
+                    Al confirmar, tu comprobante y solicitud serán enviados al especialista para su verificación.
                   </p>
                 </div>
 

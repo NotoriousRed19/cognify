@@ -2,6 +2,27 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-guard";
 import { startOfWeek, endOfWeek, addDays, format } from "date-fns";
 
+/**
+ * Manejador de la petición GET para las estadísticas principales del Dashboard.
+ * 
+ * Propósito:
+ * Recopilar y consolidar diversas métricas de pacientes y citas para alimentar 
+ * los gráficos y tarjetas de resumen en el panel de control del profesional.
+ * 
+ * Flujo de ejecución:
+ * 1. Verifica la autenticación del usuario (`requireAuth`).
+ * 2. Total de Pacientes: Cuenta todos los registros en la tabla `Patient`.
+ * 3. Próximas Citas: Obtiene las 5 citas agendadas más próximas desde la fecha actual.
+ * 4. Retención: Calcula cuántos pacientes únicos tienen al menos una cita futura,
+ *    y por deducción, cuántos no tienen citas agendadas.
+ * 5. Actividad Semanal: Obtiene todas las citas de la semana en curso (Lunes a Domingo)
+ *    y las agrupa por día para ser mostradas en el gráfico de barras.
+ * 6. Citas de Hoy: Cuenta las citas agendadas específicamente para el día actual.
+ * 7. Sesiones Completadas: Cuenta el histórico total de citas con estado "COMPLETADA".
+ * 8. Pendientes de Aprobación: Cuenta las citas públicas que esperan ser confirmadas.
+ * 
+ * @returns {Promise<Response>} Respuesta JSON con el consolidado de métricas (cifras y arreglos).
+ */
 export async function GET() {
   try {
     const { user, supabase, errorResponse } = await requireAuth();
